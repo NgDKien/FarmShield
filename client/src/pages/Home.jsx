@@ -5,14 +5,14 @@ import { NavLink } from 'react-router-dom'
 
 const Home = () => {
     return (
-        <div className="font-main flex min-h-screen">
+        <div className="font-main flex h-screen overflow-hidden">
             <Sidebar />
 
             <div className="flex-1 flex flex-col min-w-0">
                 <Header />
 
                 {/* Content Grid */}
-                <div className="flex-1 p-4 lg:p-8 overflow-auto">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-8">
                     {/* First Row */}
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-12 mb-6 lg:mb-12">
                         <NavLink to="/carpark" className="block">
