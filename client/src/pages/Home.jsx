@@ -20,10 +20,10 @@ const Home = () => {
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
                         </NavLink>
 
-                        <div>
+                        <NavLink to="/cong-khu-trung">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Cổng khu khử trùng</p>
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
-                        </div>
+                        </NavLink>
                     </div>
 
                     {/* Second Row */}
@@ -33,10 +33,10 @@ const Home = () => {
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
                         </NavLink>
 
-                        <div>
+                        <NavLink to="/phong-cach-ly">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Phòng cách ly</p>
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
-                        </div>
+                        </NavLink>
                     </div>
                 </div>
             </div>
