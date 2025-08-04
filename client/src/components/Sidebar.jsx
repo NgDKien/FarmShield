@@ -12,9 +12,14 @@ const Sidebar = () => {
     }
 
     return (
-        <div className={`${isSidebarOpen ? 'w-60 lg:w-60 md:w-48 sm:w-40' : 'w-16'
-            } min-h-screen border-r border-gray-300 flex-shrink-0 transition-all duration-300 ease-in-out`}>
-            <div className="flex justify-end p-4 lg:p-5">
+        <div
+            className={`${isSidebarOpen
+                ? 'w-40 sm:w-48 md:w-56 lg:w-64'
+                : 'w-16'
+                } h-screen border-r border-gray-300 flex-shrink-0 transition-all duration-300 ease-in-out bg-white flex flex-col`}
+        >
+            {/* Header */}
+            <div className="flex justify-end p-4">
                 <img
                     src="/src/assets/menu.svg"
                     className="w-6 h-6 cursor-pointer hover:opacity-70 transition-opacity"
@@ -90,8 +95,11 @@ const Sidebar = () => {
 
                         <NavLink className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-red-50 cursor-pointer group relative overflow-hidden rounded-lg">
                             <div className="absolute right-0 top-0 h-full w-1 bg-red-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
-                            <img src="/src/assets/log_out.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                            <p className="text-sm lg:text-base font-medium group-hover:text-red-600 transition-colors duration-200">
+                            <img
+                                src="/src/assets/log_out.svg"
+                                className="mr-3 w-5 h-5 group-hover:scale-110 transition-transform flex-shrink-0"
+                            />
+                            <p className="text-sm font-medium group-hover:text-red-600 transition-colors">
                                 Đăng xuất
                             </p>
                         </NavLink>
