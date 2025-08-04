@@ -43,9 +43,9 @@ const Home = () => {
                                     </p>
                                 )}
                             </div>
-                        </div>
 
-                        
+
+
                         </NavLink>
 
                     </div>
