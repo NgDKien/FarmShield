@@ -27,7 +27,7 @@ const Home = () => {
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
                         </NavLink>
 
-                        <div>
+                        <NavLink to="/cong-khu-trung">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Cổng khu khử trùng</p>
 
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg overflow-hidden">
@@ -44,6 +44,10 @@ const Home = () => {
                                 )}
                             </div>
                         </div>
+
+                        
+                        </NavLink>
+
                     </div>
 
                     {/* Second Row */}
@@ -53,22 +57,10 @@ const Home = () => {
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
                         </NavLink>
 
-                        <div>
+                        <NavLink to="/phong-cach-ly">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Phòng cách ly</p>
-                            <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg overflow-hidden">
-                                {gateCameraRtspUrl !== 'your_rtsp_url_here' ? (
-                                    <img
-                                        src={gateVideoFeedUrl}
-                                        alt="Cổng khu khử trùng Video Feed"
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <p className="text-center text-gray-500 p-4">
-                                        Please update 'your_rtsp_url_here' in Home.jsx with a valid RTSP URL to see the video feed.
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                            <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
+                        </NavLink>
                     </div>
                 </div>
             </div>
