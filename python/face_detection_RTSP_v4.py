@@ -248,13 +248,71 @@ def video_feed(camera_id):
                 cv2.putText(placeholder, f"Connecting to {camera_id}...", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                 ret, buffer = cv2.imencode('.jpg', placeholder)
             else:
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
             if not ret:
                 continue
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
             time.sleep(0.03)
 
     return Response(gen_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route("/check_face_to_register/<camera_id>")
+def check_face_to_register(camera_id):
+    rtsp_url = request.args.get('url')
+    if not rtsp_url:
+        return jsonify({"error": "Missing RTSP URL"}), 400
+    camera = camera_manager.get_or_create_camera(camera_id, rtsp_url)
+    if camera is None:
+        return jsonify({"error": f"Cannot initialize camera '{camera_id}'"}), 503
+
+
+    still_start_time = None
+    initial_face_location = None
+    stillness_threshold_pixels = 15
+    max_duration_check = 8
+    hold_still_duration = 3
+    start_request_time = time.time()
+    
+    
+    while time.time() - start_request_time < max_duration_check:
+        for _ in range(5):
+            frame = camera.get_frame()
+            if frame is not None:
+                break
+            time.sleep(0.2)
+        else:
+            return jsonify({"recognized": "Error: No frame"}), 500
+        
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) #color for face_recongition
+        locations = face_recognition.face_locations(rgb)
+        
+        
+        if len(locations)==1 :
+            current_face_location = locations[0]
+            if still_start_time is None:
+                still_start_time = time.time()
+                initial_face_location = current_face_location
+            else:
+                #check for movement
+                top_diff = abs(current_face_location[0] - initial_face_location[0])
+                right_diff = abs(current_face_location[1] - initial_face_location[1])
+                bottom_diff = abs(current_face_location[2] - initial_face_location[2])
+                left_diff = abs(current_face_location[3] - initial_face_location[3])
+                if max(top_diff, right_diff, bottom_diff, left_diff) <= stillness_threshold_pixels:
+                    if (time.time() - still_start_time) <= hold_still_duration:
+                        return jsonify({"recognized": True})
+                else:
+                    still_start_time = None
+                    initial_face_location = None
+                
+        else:
+            #more than face in the frame
+            still_start_time = None
+            initial_face_location = None
+            return jsonify({"recognized more than two face"})
+    
+        time.sleep(0.1)
+    return jsonify({"recognized": False})
 
 # --- WebSocket Client ---
 async def connect_to_central_server():
