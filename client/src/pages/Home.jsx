@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
 import { NavLink } from 'react-router-dom'
 import { streamVideoFeed } from '../services/faceDetectionApi';
+import { useSelector } from 'react-redux';
 
 const Home = () => {
     // Example camera ID and RTSP URL for "Cổng khu khử trùng"
@@ -11,8 +12,11 @@ const Home = () => {
     const gateCameraRtspUrl = 'rtsp://localhost:8554/webcam'; // e.g., 'rtsp://your_ip:port/stream'
     const gateVideoFeedUrl = streamVideoFeed(gateCameraId, gateCameraRtspUrl);
 
+    const { isLoggedIn, current } = useSelector(state => state.user)
+    console.log({ isLoggedIn, current })
+
     return (
-        <div className="font-main flex h-screen overflow-hidden">
+        <div className="font-main flex overflow-hidden">
             <Sidebar />
 
             <div className="flex-1 flex flex-col min-w-0">
