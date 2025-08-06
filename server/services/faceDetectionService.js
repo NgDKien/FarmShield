@@ -44,6 +44,8 @@ async function streamVideoFeedFromPython(req, res) {
 }
 
 
+
+
 async function getRegistrationEvents(req, res, next) {
     setupSSEConnection(req, res, next);
 }
@@ -86,6 +88,54 @@ async function startFaceRegistration(req, res) {
     }
 }
 
+async function checkFaceAndRegis(req,res) {
+    const {camera_id} = req.body;
+
+    if (!camera_id) {
+        return res.status(400).json({ success: false, message: "Missing 'camera_id'." });
+    }
+
+    const camera = Camera.findOne({ camera_id: camera_id });
+    const rtps_url = camera.rtsp_url;
+    const targetEdgeDeviceId = "house_server_alpha_001";
+    const command = {
+        type: "check_face_and_regis",
+        camera_id: camera_id,
+        rtps_url: rtps_url
+    };
+
+    const result = sendCommandToEdgeDevice(targetEdgeDeviceId, command);
+
+    if (result.status === "success") {
+            res.status(202).json({ success: true, message: "Check command sent to edge device.", data: command });
+            sendEvent({ status: "info", message: `Check requested on ${camera_id}` });
+        } else {
+            res.status(503).json({ success: false, message: result.message });
+        }
+}
+
+async function stopFaceRegistration(req, res) {
+    const { camera_id } = req.body;
+
+    if (!camera_id) {
+        return res.status(400).json({ success: false, message: "Missing 'camera_id'." });
+    }
+
+    const targetEdgeDeviceId = "house_server_alpha_001";
+    const command = {
+        type: "stop_check_face",
+        camera_id: camera_id,
+    };
+
+    const result = sendCommandToEdgeDevice(targetEdgeDeviceId, command);
+
+    if (result.status === "success") {
+        res.status(200).json({ success: true, message: `Stop face checking command sent for ${camera_id}.` });
+        sendEvent({ status: "info", message: `Stop face checking command sent for ${camera_id}.` });
+    } else {
+        res.status(503).json({ success: false, message: result.message });
+    }
+}
 
 async function stopCamera(req, res) {
     const { camera_id } = req.body;
@@ -111,10 +161,14 @@ async function stopCamera(req, res) {
     }
 }
 
+
+
 module.exports = {
     recognizeFaceFromPython,
     streamVideoFeedFromPython,
     getRegistrationEvents,
     startFaceRegistration,
-    stopCamera
+    stopCamera,
+    stopFaceRegistration,
+    checkFaceAndRegis
 };

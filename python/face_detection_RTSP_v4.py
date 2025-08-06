@@ -138,6 +138,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
         await websocket.send(json.dumps({"status": "error", "message": f"Failed to initialize camera '{camera_id}'"}))
         return
 
+    global is_face_registering
     collected_encodings = []
     required_encodings = 3
     max_attempts = 60
@@ -181,6 +182,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                         avg_encoding = np.mean(collected_encodings, axis=0)
                         save_face_encoding(name, avg_encoding)
                         await websocket.send(json.dumps({"status": "success", "message": f"Face registered for {name}"}))
+                        is_face_registering = False
                         return
                 else:
                     await websocket.send(json.dumps({
@@ -197,6 +199,103 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
     except Exception as e:
         print(f"[Registration Error] {e}")
         await websocket.send(json.dumps({"status": "error", "message": str(e)}))
+        
+
+is_face_registering = False
+face_check_running = False
+stop_checking = False
+
+async def check_face_to_register(websocket,camera_id,rtsp_url):
+    global face_check_running, stop_checking, is_face_registering
+    
+    if face_check_running:
+        await websocket.send(json.dumps({"status": "info", "message": "Face check already running."}))
+        await asyncio.sleep(1)
+        return 
+    
+    face_check_running = True
+    try:
+        while True:
+            if stop_checking:  # Check the stop flag
+                await websocket.send(json.dumps({"status": "info", "message": "Stopping face checking."}))
+                break 
+            
+            while is_face_registering: 
+                await asyncio.sleep(8)
+                if is_face_registering is False:
+                    break
+                
+            try: 
+                await websocket.send(json.dumps({
+                    "status": "info", 
+                    "message": f"Starting registration check on camera '{camera_id}'..."}))
+                if not rtsp_url:
+                    await websocket.send(json.dumps({
+                        "status": "error", 
+                        "message": f"Failed to initialize camera cause by no RTSP url"}))
+                camera = camera_manager.get_or_create_camera(camera_id, rtsp_url)
+                if camera is None:
+                    await websocket.send(json.dumps({"status": "error", "message": f"Failed to initialize camera '{camera_id}'"}))
+
+                still_start_time = None
+                initial_face_location = None
+                stillness_threshold_pixels = 15
+                max_duration_check = 8
+                hold_still_duration = 3
+                start_request_time = time.time()
+                
+                
+                while time.time() - start_request_time < max_duration_check:
+                    while True:
+                        frame = camera.get_frame()
+                        if frame is not None:
+                            break
+                        time.sleep(1)
+                    
+                    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) #color for face_recongition
+                    locations = face_recognition.face_locations(rgb)
+                    
+                    
+                    if len(locations)==1 :
+                        current_face_location = locations[0]
+                        if still_start_time is None:
+                            still_start_time = time.time()
+                            initial_face_location = current_face_location
+                        else:
+                            #check for movement
+                            top_diff = abs(current_face_location[0] - initial_face_location[0])
+                            right_diff = abs(current_face_location[1] - initial_face_location[1])
+                            bottom_diff = abs(current_face_location[2] - initial_face_location[2])
+                            left_diff = abs(current_face_location[3] - initial_face_location[3])
+                            if max(top_diff, right_diff, bottom_diff, left_diff) <= stillness_threshold_pixels:
+                                if (time.time() - still_start_time) <= hold_still_duration:
+                                    await websocket.send(json.dumps({"status": "success", "message": f"Start perform_registration"}))
+                                    name = "Guest"
+                                    asyncio.create_task(perform_registration(websocket, name, camera_id, rtsp_url))
+                                    is_face_registering = True
+                                    break
+                            else:
+                                still_start_time = None
+                                initial_face_location = None
+                            
+                    else:
+                        #more than face in the frame or no face
+                        still_start_time = None
+                        initial_face_location = None
+                        await websocket.send(json.dumps({
+                            "status": "info", 
+                            "message": f"More than one face is in the frame or no face, only one face is allowed"}))
+                
+                    time.sleep(0.1)
+                await websocket.send(json.dumps({"status": "info", "message": f"check_face_to_register loop"}))
+            finally:
+                await asyncio.sleep(3)
+    finally:
+        face_check_running = False
+
+
+
+
 
 # --- Flask Routes ---
 @app.route("/recognize_face/<camera_id>", methods=["GET"])
@@ -318,7 +417,8 @@ def check_face_to_register(camera_id):
 async def connect_to_central_server():
     CENTRAL_SERVER_WS_URL = "ws://localhost:5000/edge_ws"
     HOUSE_SERVER_ID = "house_server_alpha_001"
-
+    global stop_checking
+    
     while True:
         try:
             print(f"[{HOUSE_SERVER_ID}] Connecting to {CENTRAL_SERVER_WS_URL}?id={HOUSE_SERVER_ID}...")
@@ -336,6 +436,14 @@ async def connect_to_central_server():
                                 asyncio.create_task(perform_registration(websocket, name, camera_id, rtsp_url))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing fields"}))
+                        elif cmd.get("type") == "check_face_and_regis":
+                            camera_id = cmd.get("camera_id")
+                            rtsp_url = cmd.get("rtsp_url")
+                            if camera_id and rtsp_url:
+                                stop_checking = False
+                                asyncio.create_task(check_face_to_register(websocket, camera_id, rtsp_url))
+                            else:
+                                await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id or rtsp_url"}))
                         elif cmd.get("type") == "stop_camera":
                             cid = cmd.get("camera_id")
                             if cid:
@@ -343,6 +451,11 @@ async def connect_to_central_server():
                                 await websocket.send(json.dumps({"status": "info", "message": f"Stopped camera '{cid}'."}))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id"}))
+                        elif cmd.get("type") == "stop_check_face":
+                            stop_checking = True
+                            camera_id = cmd.get("camera_id")
+                            await websocket.send(json.dumps({"status": "info", "message": f"Stopping face checking for camera {camera_id}"}))
+                            
                     except json.JSONDecodeError:
                         print(f"[{HOUSE_SERVER_ID}] Invalid JSON: {message}")
                     except Exception as e:
