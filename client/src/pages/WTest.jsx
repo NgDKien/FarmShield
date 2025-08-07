@@ -1,6 +1,6 @@
 import React from 'react'
 import Alert from '../components/Alert'
-import Bellpopup from '../components/Bellpopup'
+import Bellpopup from '../components/BellPopUp'
 
 const WTest = () => {
     return (
