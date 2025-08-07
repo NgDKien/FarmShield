@@ -1,15 +1,39 @@
-import React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import React, { useEffect, useState } from 'react'
 import { toggleSidebar } from '../app/sidebarSlice'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { getCurrent } from '../app/userAsyncAction'
+import { useDispatch, useSelector } from 'react-redux'
+import { logout } from '../app/userSlice'
+import { Grid } from 'ldrs/react'
+import 'ldrs/react/Grid.css'
 
 const Sidebar = () => {
     const dispatch = useDispatch()
+    const navigate = useNavigate()
+
     const isSidebarOpen = useSelector((state) => state.sidebar.isSidebarOpen)
 
     const handleToggleSidebar = () => {
         dispatch(toggleSidebar())
     }
+
+    const { isLoggedIn, current } = useSelector(state => state.user)
+
+    useEffect(() => {
+        if (isLoggedIn) dispatch(getCurrent())
+    }, [dispatch, isLoggedIn])
+
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleLogout = () => {
+        setIsLoading(true)
+
+        setTimeout(() => {
+            dispatch(logout())
+            navigate('/login')
+        }, 3000)
+    }
+
 
     return (
         <div
@@ -32,7 +56,7 @@ const Sidebar = () => {
                     <div className="flex flex-col items-center">
                         <div className="w-24 h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 bg-gray-300 rounded-full"></div>
                         <p className="font-semibold text-blue-600 text-lg lg:text-xl xl:text-2xl mt-4 text-center px-2">
-                            Nguyen Van A
+                            {`${current?.fullname}`}
                         </p>
                     </div>
 
@@ -79,7 +103,7 @@ const Sidebar = () => {
 
                         <NavLink to="/camera-faceid" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
                             <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
-                            <img src="/src/assets/people.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                            <img src="/src/assets/quet_mat.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
                             <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
                                 Camera quét mặt
                             </p>
@@ -93,7 +117,18 @@ const Sidebar = () => {
                             </p>
                         </NavLink>
 
-                        <NavLink className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-red-50 cursor-pointer group relative overflow-hidden rounded-lg">
+                        <NavLink to="/quan-ly-camera" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
+                            <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
+                            <img src="/src/assets/quet_mat.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                            <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                                Quản lý Camera
+                            </p>
+                        </NavLink>
+
+                        <div
+                            onClick={handleLogout}
+                            className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-red-50 cursor-pointer group relative overflow-hidden rounded-lg"
+                        >
                             <div className="absolute right-0 top-0 h-full w-1 bg-red-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
                             <img
                                 src="/src/assets/log_out.svg"
@@ -102,8 +137,17 @@ const Sidebar = () => {
                             <p className="text-sm font-medium group-hover:text-red-600 transition-colors">
                                 Đăng xuất
                             </p>
-                        </NavLink>
+                        </div>
                     </div>
+                </div>
+            )}
+            {isLoading && (
+                <div className="fixed inset-0 bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-50">
+                    <Grid
+                        size="140"
+                        speed="1.5"
+                        color="#5BE176"
+                    />
                 </div>
             )}
         </div>

@@ -7,7 +7,9 @@ const path = {
     CAM__PHONG_CACH_LY: 'phong-cach-ly',
     CAM__QUET_MAT: 'camera-faceid',
     ADMIN__MANAGE_GSV: 'quan-ly-gsv',
+    ADMIN__MANAGE_CAMERA: 'quan-ly-camera',
     NOTIFICATION: 'notification',
+    LOGIN: 'login',
     TEST: 'test',
     ALL: '*',
 }
