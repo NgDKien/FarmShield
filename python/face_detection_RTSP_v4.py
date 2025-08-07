@@ -162,6 +162,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                 if known_encodings and True in face_recognition.compare_faces(known_encodings, encoding):
                     matched_name = known_names[np.argmin(face_recognition.face_distance(known_encodings, encoding))]
                     await websocket.send(json.dumps({"status": "error", "message": f"Face already registered for {matched_name}"}))
+                    is_face_registering = False
                     return
 
                 is_distinct = True
@@ -194,13 +195,16 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
 
         if not collected_encodings:
             await websocket.send(json.dumps({"status": "error", "message": "No face detected."}))
+            is_face_registering = False
         else:
             await websocket.send(json.dumps({"status": "error", "message": f"Only {len(collected_encodings)} angles captured."}))
+            is_face_registering = False
     except Exception as e:
         print(f"[Registration Error] {e}")
+        is_face_registering = False
         await websocket.send(json.dumps({"status": "error", "message": str(e)}))
         
-
+ 
 is_face_registering = False
 face_check_running = False
 stop_checking = False
@@ -356,7 +360,7 @@ def video_feed(camera_id):
     return Response(gen_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route("/check_face_to_register/<camera_id>")
-def check_face_to_register(camera_id):
+def check_face_to_register_old(camera_id):
     rtsp_url = request.args.get('url')
     if not rtsp_url:
         return jsonify({"error": "Missing RTSP URL"}), 400
