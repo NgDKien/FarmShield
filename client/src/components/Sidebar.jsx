@@ -40,7 +40,7 @@ const Sidebar = () => {
             className={`${isSidebarOpen
                 ? 'w-40 sm:w-48 md:w-56 lg:w-64'
                 : 'w-16'
-                } h-screen border-r border-gray-300 flex-shrink-0 transition-all duration-300 ease-in-out bg-white flex flex-col`}
+                } min-h-screen border-r border-gray-300 flex-shrink-0 transition-all duration-300 ease-in-out bg-white flex flex-col`}
         >
             {/* Header */}
             <div className="flex justify-end p-4">
@@ -54,8 +54,13 @@ const Sidebar = () => {
             {isSidebarOpen && (
                 <div className="px-4 pt-6">
                     <div className="flex flex-col items-center">
-                        <div className="w-24 h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 bg-gray-300 rounded-full"></div>
-                        <p className="font-semibold text-blue-600 text-lg lg:text-xl xl:text-2xl mt-4 text-center px-2">
+                        {current?.avatarUrl
+                            ?
+                            <img src={current?.avatarUrl} className="w-24 h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 rounded-full object-cover" />
+                            :
+                            <img src="/src/assets/default_avatar.svg" className='w-24 h-24 lg:w-32 lg:h-32 xl:w-36 xl:h-36 rounded-full object-cover bg-amber-200' />
+                        }
+                        <p className="font-bold text-blue-600 text-lg lg:text-xl xl:text-2xl mt-4 text-center px-2">
                             {`${current?.fullname}`}
                         </p>
                     </div>
@@ -98,14 +103,6 @@ const Sidebar = () => {
                             <img src="/src/assets/phong_cach_ly.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
                             <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
                                 Phòng cách ly
-                            </p>
-                        </NavLink>
-
-                        <NavLink to="/camera-faceid" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
-                            <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
-                            <img src="/src/assets/quet_mat.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                            <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                                Camera quét mặt
                             </p>
                         </NavLink>
 

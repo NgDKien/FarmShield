@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import path from '../ultils/path'
 import { login } from '../app/userSlice'
 import { useDispatch } from 'react-redux'
-import { Quantum } from 'ldrs/react'
+import { Grid } from 'ldrs/react'
 import 'ldrs/react/Quantum.css'
 
 const Login = () => {
@@ -22,7 +22,6 @@ const Login = () => {
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = useCallback(async () => {
-        console.log('Thông tin đăng nhập:', payload);
 
         if (!payload.account || !payload.password) {
             alert("Vui lòng nhập đủ thông tin đăng nhập!")
@@ -30,8 +29,6 @@ const Login = () => {
         }
 
         const rs = await apiLogin(payload)
-        console.log('API Response:', rs) // Thêm dòng này
-        console.log('rs.success:', rs.success)
         if (rs.success) {
             setIsLoading(true)
             setTimeout(() => {
@@ -89,9 +86,9 @@ const Login = () => {
             </div>
             {isLoading && (
                 <div className="fixed inset-0 bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-50">
-                    <Quantum
+                    <Grid
                         size="140"
-                        speed="1.7"
+                        speed="1.5"
                         color="#5BE176"
                     />
                 </div>

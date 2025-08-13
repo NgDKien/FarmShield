@@ -32,9 +32,14 @@ const CongKhuKT = () => {
 
                     <div className='flex flex-col items-center px-8 mb-5'>
                         <div className="w-full max-w-[1200px]">
-                            <p className="text-[28px] md:text-[32px] font-semibold mb-[9px] text-center md:text-left">
-                                Cổng khu khử trùng
-                            </p>
+                            <div className='flex justify-between mb-[20px] items-center'>
+                                <p className="text-[28px] md:text-[32px] font-semibold text-center md:text-left mt-[20px]">
+                                    Cổng khu khử trùng
+                                </p>
+                                <button className="px-6 py-3 rounded-3xl border border-gray-300 bg-gray-100 hover:bg-blue-100 text-gray-700 font-medium shadow-sm transition duration-200 ease-in-out cursor-pointer">
+                                    Chia sẻ màn hình
+                                </button>
+                            </div>
 
                             <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between">
                                 {/* Box bên trái */}
@@ -42,7 +47,7 @@ const CongKhuKT = () => {
 
                                 {/* Info Panel */}
                                 <div className='w-full xl:w-80 2xl:w-96'>
-                                    <div className='flex flex-col items-center justify-center h-64 lg:h-80 xl:h-[484px] rounded-xl lg:rounded-2xl border border-gray-400 bg-white shadow-sm'>
+                                    <div className='flex flex-col items-center justify-center h-64 lg:h-80 xl:h-[150px] rounded-xl lg:rounded-2xl border border-gray-400 bg-white shadow-sm'>
                                         <p className='text-lg lg:text-xl font-semibold text-center px-4 mb-4'>
                                             Số người đi vào hiện tại:
                                         </p>
@@ -50,6 +55,8 @@ const CongKhuKT = () => {
                                             100
                                         </div>
                                     </div>
+
+                                    <div className='flex flex-col items-center justify-center mt-[20px] xl:h-[314px] rounded-xl lg:rounded-2xl border border-gray-400 bg-white shadow-sm'>Warning</div>
                                 </div>
                             </div>
                         </div>

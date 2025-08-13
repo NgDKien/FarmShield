@@ -26,7 +26,7 @@ const BaiXe = () => {
                         </span>
                     </NavLink>
 
-                    <div className="px-8 pb-8 bg-[#F8F9FD]">
+                    <div className="px-8 pb-8 bg-[#F8F9FD] pt-[20px]">
                         <p className="text-[32px] font-semibold mb-[9px] text-center md:text-left">
                             Bãi xe
                         </p>
