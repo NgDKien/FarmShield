@@ -26,7 +26,7 @@ export const store = configureStore({
     reducer: {
         sidebar: sidebarReducer,
         camera: cameraReducer,
-        user: persistReducer(userConfig, userReducer)
+        user: persistReducer(userConfig, userReducer),
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({ serializableCheck: false }),

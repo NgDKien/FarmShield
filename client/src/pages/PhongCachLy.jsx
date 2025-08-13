@@ -22,7 +22,7 @@ const PhongCachLy = () => {
 
                     <div className="flex flex-col items-center px-8 mb-5">
                         <div className="w-full max-w-[1200px]">
-                            <p className="text-[32px] font-semibold mb-[9px] text-center md:text-left">
+                            <p className="text-[32px] font-semibold mb-[9px] text-center md:text-left mt-[20px]">
                                 Phòng cách ly
                             </p>
 

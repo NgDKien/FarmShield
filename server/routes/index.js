@@ -4,8 +4,6 @@ const faceDetectionRoute = require('./faceDectectionRoute');
 const personRouter = require('./personRoute');
 
 
-
-
 const initRoutes = (app) => {
     app.use('/api/user', userRouter)
     app.use('/api/camera', cameraRouter)
