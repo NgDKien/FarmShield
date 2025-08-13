@@ -90,18 +90,22 @@ async function startFaceRegistration(req, res) {
 
 async function checkFaceAndRegis(req,res) {
     const {camera_id} = req.body;
+    const {rtsp_url} = req.body;
 
     if (!camera_id) {
         return res.status(400).json({ success: false, message: "Missing 'camera_id'." });
     }
+    if (!rtsp_url) {
+        return res.status(400).json({ success: false, message: "Missing 'rtsp_url'." });
+    }
 
-    const camera = Camera.findOne({ camera_id: camera_id });
-    const rtps_url = camera.rtsp_url;
+    // const camera = Camera.findOne({ camera_id: camera_id });
+    // const rtps_url = camera.rtsp_url;
     const targetEdgeDeviceId = "house_server_alpha_001";
     const command = {
         type: "check_face_and_regis",
         camera_id: camera_id,
-        rtps_url: rtps_url
+        rtsp_url: rtsp_url
     };
 
     const result = sendCommandToEdgeDevice(targetEdgeDeviceId, command);

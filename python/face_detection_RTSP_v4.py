@@ -87,8 +87,8 @@ class CameraManager:
                     print(f"[Manager] No RTSP URL for '{camera_id}'. Cannot create.")
                     return None
                 self.cameras[camera_id] = Camera(rtsp_url)
-            else:
-                print(f"[Manager] Reusing camera for '{camera_id}'")
+            # else:
+            #     #print(f"[Manager] Reusing camera for '{camera_id}'")
             return self.cameras[camera_id]
 
     def stop_camera(self, camera_id):
@@ -286,14 +286,14 @@ async def check_face_to_register(websocket,camera_id,rtsp_url):
                         #more than face in the frame or no face
                         still_start_time = None
                         initial_face_location = None
-                        await websocket.send(json.dumps({
+                        
+                    time.sleep(0.1)
+                #await websocket.send(json.dumps({"status": "info", "message": f"check_face_to_register loop"}))
+                await websocket.send(json.dumps({
                             "status": "info", 
                             "message": f"More than one face is in the frame or no face, only one face is allowed"}))
-                
-                    time.sleep(0.1)
-                await websocket.send(json.dumps({"status": "info", "message": f"check_face_to_register loop"}))
             finally:
-                await asyncio.sleep(3)
+                await asyncio.sleep(8)
     finally:
         face_check_running = False
 

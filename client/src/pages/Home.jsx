@@ -1,18 +1,25 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
 import { NavLink } from 'react-router-dom'
-import { streamVideoFeed } from '../services/faceDetectionApi';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCameraDetails } from '../app/cameraSlice';
+import { CameraFeed } from '../components';
 
 const Home = () => {
-    // Example camera ID and RTSP URL for "Cổng khu khử trùng"
-    // IMPORTANT: Replace 'your_rtsp_url_here' with your actual RTSP URL
     const gateCameraId = 'camera-gate-001';
-    const gateCameraRtspUrl = 'rtsp://localhost:8554/webcam'; // e.g., 'rtsp://your_ip:port/stream'
-    const gateVideoFeedUrl = streamVideoFeed(gateCameraId, gateCameraRtspUrl);
+    const gateCameraRtspUrl = 'rtsp://localhost:8554/webcam';
 
     const { isLoggedIn, current } = useSelector(state => state.user)
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(setCameraDetails({
+            cameraId: gateCameraId,
+            rtspUrl: gateCameraRtspUrl
+        }));
+    }, [dispatch, gateCameraId, gateCameraRtspUrl]);
+
     console.log({ isLoggedIn, current })
 
     return (
@@ -33,23 +40,11 @@ const Home = () => {
 
                         <NavLink to="/cong-khu-trung">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Cổng khu khử trùng</p>
-
-                            <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg overflow-hidden">
-                                {gateCameraRtspUrl !== 'your_rtsp_url_here' ? (
-                                    <img
-                                        src={gateVideoFeedUrl}
-                                        alt="Cổng khu khử trùng Video Feed"
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <p className="text-center text-gray-500 p-4">
-                                        Please update 'your_rtsp_url_here' in Home.jsx with a valid RTSP URL to see the video feed.
-                                    </p>
-                                )}
-                            </div>
-
-
-
+                            <CameraFeed
+                                cameraId={gateCameraId}
+                                rtspUrl={gateCameraRtspUrl}
+                                altText="Cổng khu khử trùng Video Feed"
+                            />
                         </NavLink>
 
                     </div>

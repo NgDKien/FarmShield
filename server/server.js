@@ -12,11 +12,19 @@ app.use(
     cors({
         origin: process.env.CLIENT_URL,
         methods: ["POST", "PUT", "GET", "DELETE"],
+        allowedHeaders: [
+        'Origin',
+        'X-Requested-With', 
+        'Content-Type', 
+        'Accept', 
+        'Authorization',
+        'Cache-Control'
+        ],
         credentials: true,
     })
 )
 app.use(cookieParser())
-const port = process.env.PORT || 8888
+const port = process.env.PORT
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
