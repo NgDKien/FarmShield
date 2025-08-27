@@ -166,7 +166,7 @@ const login = asyncHandler(async (req, res) => {
 
 const getCurrent = asyncHandler(async (req, res) => {
     const { _id } = req.user
-    const user = await User.findById(_id).select('-refreshToken -password -role')
+    const user = await User.findById(_id).select('-refreshToken -password')
     return res.status(200).json({
         success: true,
         rs: user ? user : 'User not found'
@@ -209,10 +209,8 @@ const logout = asyncHandler(async (req, res) => {
 })
 
 const updateUser = asyncHandler(async (req, res) => {
-    // Sử dụng multer middleware
     upload.single('avatar')(req, res, async (err) => {
         try {
-            // Xử lý lỗi multer
             if (err) {
                 if (err instanceof multer.MulterError) {
                     switch (err.code) {
@@ -245,10 +243,8 @@ const updateUser = asyncHandler(async (req, res) => {
                 });
             }
 
-            // Lấy ID từ params
             const { id } = req.params;
 
-            // Kiểm tra ID hợp lệ
             if (!id) {
                 if (req.file) {
                     deleteFile(req.file.path);
@@ -259,7 +255,6 @@ const updateUser = asyncHandler(async (req, res) => {
                 });
             }
 
-            // Tìm user trong database
             const existingUser = await User.findById(id);
             if (!existingUser) {
                 if (req.file) {
@@ -271,13 +266,10 @@ const updateUser = asyncHandler(async (req, res) => {
                 });
             }
 
-            // Lấy dữ liệu từ request
-            const { fullname, account, role } = req.body;
+            const { fullname, account, role, password } = req.body;
 
-            // Tạo object cập nhật
             const updateData = {};
 
-            // Cập nhật fullname nếu có
             if (fullname !== undefined) {
                 if (!fullname.trim()) {
                     if (req.file) {
@@ -300,7 +292,6 @@ const updateUser = asyncHandler(async (req, res) => {
                 updateData.fullname = fullname.trim();
             }
 
-            // Cập nhật account nếu có
             if (account !== undefined) {
                 const trimmedAccount = account.trim().toLowerCase();
 
@@ -314,7 +305,6 @@ const updateUser = asyncHandler(async (req, res) => {
                     });
                 }
 
-                // Kiểm tra độ dài và format
                 if (trimmedAccount.length < 3 || trimmedAccount.length > 50) {
                     if (req.file) deleteFile(req.file.path);
                     return res.status(400).json({
@@ -323,7 +313,6 @@ const updateUser = asyncHandler(async (req, res) => {
                     });
                 }
 
-                // Kiểm tra định dạng account
                 const accountRegex = /^[a-zA-Z0-9_-]+$/;
                 if (!accountRegex.test(trimmedAccount)) {
                     if (req.file) deleteFile(req.file.path);
@@ -333,7 +322,6 @@ const updateUser = asyncHandler(async (req, res) => {
                     });
                 }
 
-                // Kiểm tra tài khoản đã tồn tại (trừ user hiện tại)
                 if (trimmedAccount !== existingUser.account) {
                     const duplicateUser = await User.findOne({
                         account: trimmedAccount,
@@ -354,7 +342,6 @@ const updateUser = asyncHandler(async (req, res) => {
                 updateData.account = trimmedAccount;
             }
 
-            // Cập nhật role nếu có
             if (role !== undefined) {
                 if (!["GSV", "Admin"].includes(role)) {
                     if (req.file) {
@@ -368,7 +355,6 @@ const updateUser = asyncHandler(async (req, res) => {
                 updateData.role = role;
             }
 
-            // Xử lý avatar mới
             if (req.file) {
                 // Xóa avatar cũ nếu có
                 if (existingUser.avatar) {
@@ -376,6 +362,36 @@ const updateUser = asyncHandler(async (req, res) => {
                 }
 
                 updateData.avatar = req.file.path.replace(/\\/g, '/'); // Normalize path for Windows
+            }
+
+            if (password !== undefined && password !== null && password !== '') {
+                const trimmedPassword = password.trim();
+
+                // Validate password
+                if (trimmedPassword.length < 6) {
+                    if (req.file) {
+                        deleteFile(req.file.path);
+                    }
+                    return res.status(400).json({
+                        success: false,
+                        message: "Mật khẩu phải có ít nhất 6 ký tự"
+                    });
+                }
+
+                if (trimmedPassword.length > 128) {
+                    if (req.file) {
+                        deleteFile(req.file.path);
+                    }
+                    return res.status(400).json({
+                        success: false,
+                        message: "Mật khẩu quá dài (tối đa 128 ký tự)"
+                    });
+                }
+
+                // Lưu password trực tiếp (không hash)
+                updateData.password = trimmedPassword;
+
+                console.log('Password update requested - new password set');
             }
 
             // Cập nhật user
@@ -398,11 +414,10 @@ const updateUser = asyncHandler(async (req, res) => {
                 });
             }
 
-            // Response success (password đã bị loại bỏ qua toJSON method)
             return res.status(200).json({
                 success: true,
                 message: "Cập nhật thông tin thành công!",
-                data: updatedUser // toJSON sẽ tự động loại bỏ password và refreshToken
+                data: updatedUser
             });
 
         } catch (error) {

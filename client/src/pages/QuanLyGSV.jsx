@@ -15,6 +15,7 @@ const QuanLyGVS = () => {
     const [error, setError] = useState(null);
     const [deleteAccountId, setDeleteAccountId] = useState(null);
     const [deleting, setDeleting] = useState(false); // State cho loading khi xóa
+    const [refreshing, setRefreshing] = useState(false);
 
     // Fetch tất cả users khi component mount
     useEffect(() => {
@@ -29,7 +30,6 @@ const QuanLyGVS = () => {
             const response = await getAllUsers();
 
             if (response.success) {
-                // Map dữ liệu từ API về format của component
                 const mappedAccounts = response.data.map(user => ({
                     id: user._id,
                     fullname: user.fullname,
@@ -80,18 +80,15 @@ const QuanLyGVS = () => {
                 setDeleting(true);
                 setError(null);
 
-                // Gọi API xóa user
                 const response = await deleteUser(deleteAccountId);
 
                 if (response.success) {
                     // Xóa user khỏi state local
                     setAccounts((prev) => prev.filter(acc => acc.id !== deleteAccountId));
 
-                    // Đóng popup và reset state
                     setDeleteAccountId(null);
                     setShowDeletePopup(false);
 
-                    // Hiển thị thông báo thành công với SweetAlert
                     await Swal.fire({
                         icon: 'success',
                         title: 'Xóa thành công!',
@@ -104,7 +101,6 @@ const QuanLyGVS = () => {
                 } else {
                     setError(response.message || 'Có lỗi xảy ra khi xóa tài khoản');
 
-                    // Hiển thị thông báo lỗi với SweetAlert
                     await Swal.fire({
                         icon: 'error',
                         title: 'Xóa thất bại!',
@@ -119,7 +115,6 @@ const QuanLyGVS = () => {
             const errorMessage = error.message || 'Không thể xóa tài khoản. Vui lòng thử lại sau.';
             setError(errorMessage);
 
-            // Hiển thị thông báo lỗi với SweetAlert
             await Swal.fire({
                 icon: 'error',
                 title: 'Có lỗi xảy ra!',
@@ -132,7 +127,6 @@ const QuanLyGVS = () => {
         }
     };
 
-
     const handleEditClick = (account) => {
         setEditAccount(account);
         setShowAddPopup(true);
@@ -143,8 +137,11 @@ const QuanLyGVS = () => {
         setShowDeletePopup(true);
     };
 
-    const handleRefresh = () => {
-        fetchAllUsers();
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        setError(null);
+        await fetchAllUsers();
+        setRefreshing(false);
     };
 
     const handleCloseError = () => {
@@ -198,7 +195,7 @@ const QuanLyGVS = () => {
                                     <button
                                         onClick={handleRefresh}
                                         className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                                        disabled={loading}
+                                        disabled={loading || refreshing}
                                     >
                                         Thử lại
                                     </button>
@@ -212,12 +209,43 @@ const QuanLyGVS = () => {
                             </div>
                         )}
 
-                        {/* Title + Add Button */}
+                        {/* Title + Buttons */}
                         <div className="max-w-[1200px] mx-auto flex justify-between items-center mb-4">
                             <h2 className="text-[32px] font-semibold text-black">
                                 Danh sách tài khoản của giám sát viên ({accounts.length})
                             </h2>
+
                             <div className="flex gap-3">
+                                <button
+                                    onClick={handleRefresh}
+                                    disabled={refreshing || loading}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#999] rounded-[7px] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                    title="Làm mới dữ liệu"
+                                >
+                                    <div className={`w-6 h-6 ${refreshing ? 'animate-spin' : ''}`}>
+                                        {refreshing ? (
+                                            <div className="w-6 h-6 border-2 border-[#003BD0] border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="#003BD0"
+                                                strokeWidth="2.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                className="w-6 h-6"
+                                            >
+                                                <polyline points="23 4 23 10 17 10"></polyline>
+                                                <polyline points="1 20 1 14 7 14"></polyline>
+                                                <path d="m20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="text-[#003BD0] text-2xl font-semibold">
+                                        {refreshing ? 'Đang tải...' : 'Làm mới'}
+                                    </span>
+                                </button>
+
                                 <button
                                     onClick={() => {
                                         setEditAccount(null);

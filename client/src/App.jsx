@@ -5,7 +5,7 @@ import path from './ultils/path'
 import { useSelector } from 'react-redux';
 
 const ProtectedRoute = ({ children }) => {
-  const isLoggedIn = useSelector(state => state.user.isLoggedIn);
+  const { isLoggedIn, current } = useSelector(state => state.user);
 
   if (!isLoggedIn) {
     return <Navigate to={path.LOGIN} replace />;
