@@ -51,7 +51,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
             "message": f"Failed to initialize camera '{camera_id}'"}))
         return
 
-    global is_face_registering
+    
     collected_encodings = []
     required_encodings =  1
     max_attempts = 60
@@ -84,7 +84,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                     print("[DEBUG] Captured initial avatar bytes for registration.")
                 
                 encoding = face_recognition.face_encodings(rgb, face_locations)[0]
-                if known_encodings and True in face_recognition.compare_faces(known_encodings, encoding, tolerance=0.4):
+                if known_encodings and True in face_recognition.compare_faces(known_encodings, encoding):
                     matched_face_distances = face_recognition.face_distance(known_encodings, encoding)
                     matched_faceId = known_names[np.argmin(matched_face_distances)]
                     print(f"[DEBUG] During registration for '{name}', current encoding matched '{matched_faceId}' (from known faces).")
@@ -94,7 +94,7 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                         "status": "error", 
                         "message": f"Face already registered for {matched_faceId}"}))
                     api_caller.updateEntryLogSanitizeFacility(matched_faceId)
-                    is_face_registering = False
+                    # is_face_registering = False
                     return
 
                 is_distinct = True
@@ -127,14 +127,14 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                                 "camera_id": camera_id,
                                 "status": "success", 
                                 "message": f"Face registered for {facial_scan_id_uuid}"}))
-                            is_face_registering = False
+                            # is_face_registering = False
                             return
                         else:
                             await websocket.send(json.dumps({
                                 "camera_id": camera_id,
                                 "status": "error", 
                                 "message": "Failed to register person with the backend."}))
-                            is_face_registering = False
+                            # is_face_registering = False
                             return
                 else:
                     await websocket.send(json.dumps({
@@ -150,28 +150,28 @@ async def perform_registration(websocket, name, camera_id, rtsp_url):
                 "camera_id": camera_id,
                 "status": "error", 
                 "message": "No face detected."}))
-            is_face_registering = False
+            # is_face_registering = False
         else:
             await websocket.send(json.dumps({
                 "camera_id": camera_id,
                 "status": "error", 
                 "message": f"Only {len(collected_encodings)} angles captured."}))
-            is_face_registering = False
+            # is_face_registering = False
     except Exception as e:
         print(f"[Registration Error] {e}")
-        is_face_registering = False
+        # is_face_registering = False
         await websocket.send(json.dumps({
             "camera_id": camera_id,
             "status": "error", 
             "message": str(e)}))
         
  
-is_face_registering = False
+# is_face_registering = False
 face_check_running = False
 stop_checking = False
 
 async def check_face_to_register(websocket,camera_id,rtsp_url, name):
-    global face_check_running, stop_checking, is_face_registering
+    global face_check_running, stop_checking
     
     if face_check_running:
         # await websocket.send(json.dumps({"status": "info", "message": "Face check already running."}))
@@ -188,9 +188,9 @@ async def check_face_to_register(websocket,camera_id,rtsp_url, name):
                     "message": "Stopping face checking."}))
                 break 
             
-            while is_face_registering: 
-                if is_face_registering is False:
-                    break
+            # while is_face_registering: 
+            #     if is_face_registering is False:
+            #         break
                 
             try: 
                 await websocket.send(json.dumps({
@@ -240,9 +240,9 @@ async def check_face_to_register(websocket,camera_id,rtsp_url, name):
                         await websocket.send(json.dumps({
                             "camera_id": camera_id,
                             "status": "success",
-                            "message": f"Face Detected, please stand still to register."
+                            "message": f"Face Detected, Please Hold still to register."
                         }))
-                        time.sleep(1) #wait 1 second before save inital still face posistion
+                        time.sleep(0.2) #wait 1 second before save inital still face posistion
                         current_face_location = locations[0]
                         
                         if still_start_time is None:
@@ -256,16 +256,16 @@ async def check_face_to_register(websocket,camera_id,rtsp_url, name):
                             left_diff = abs(current_face_location[3] - initial_face_location[3])
                             if max(top_diff, right_diff, bottom_diff, left_diff) <= stillness_threshold_pixels:
                                 await websocket.send(json.dumps({
-                                        "camera_id": camera_id,"status": "success", "message": f"Please Hold Still."}))
-                                await asyncio.sleep(1)
+                                        "camera_id": camera_id,"status": "success", "message": f"Wait..."}))
+                                await asyncio.sleep(0.2)
                                 if (time.time() - still_start_time) >= hold_still_duration:
                                     await websocket.send(json.dumps({
                                         "camera_id": camera_id,
                                         "status": "success", 
                                         "message": f"Start perform_registration"}))
-                                    is_face_registering = True
+                                    # is_face_registering = True
                                     await asyncio.create_task(perform_registration(websocket, name, camera_id, rtsp_url))
-                                    time.sleep(4)
+                                    time.sleep(1)
                                     break
                             else:
                                 still_start_time = None
@@ -274,7 +274,7 @@ async def check_face_to_register(websocket,camera_id,rtsp_url, name):
                                         "camera_id": camera_id,
                                         "status": "error", 
                                         "message": f"Moving from original point, please stand still."}))
-                                time.sleep(4)
+                                time.sleep(1)
                                 
                                 
                     else:

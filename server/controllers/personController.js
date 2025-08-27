@@ -4,7 +4,7 @@ const registerPerson = async (req, res) => {
     const { name, facialScanId } = req.body;
     let avatarPath = null;
     if (req.file) {
-        avatarPath = `/avatars/${req.file.filename}`;
+        avatarPath = `people/avatars/${req.file.filename}`;
     }
     try {
         const newPerson = new Person({
