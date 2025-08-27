@@ -106,21 +106,25 @@ const Sidebar = () => {
                             </p>
                         </NavLink>
 
-                        <NavLink to="/quan-ly-gsv" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
-                            <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
-                            <img src="/src/assets/people.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                            <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                                Quản lý tài khoản GSV
-                            </p>
-                        </NavLink>
+                        {current?.role === 'Admin' && (
+                            <NavLink to="/quan-ly-gsv" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
+                                <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
+                                <img src="/src/assets/people.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                                <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Quản lý tài khoản GSV
+                                </p>
+                            </NavLink>
+                        )}
 
-                        <NavLink to="/quan-ly-camera" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
-                            <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
-                            <img src="/src/assets/quet_mat.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                            <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
-                                Quản lý Camera
-                            </p>
-                        </NavLink>
+                        {current?.role === "Admin" && (
+                            <NavLink to="/quan-ly-camera" className="flex items-center p-2 lg:p-3 transition-all duration-200 hover:bg-blue-50 cursor-pointer group relative overflow-hidden rounded-lg">
+                                <div className="absolute right-0 top-0 h-full w-1 bg-blue-500 transform translate-x-full group-hover:translate-x-0 transition-transform duration-200"></div>
+                                <img src="/src/assets/quet_mat.svg" className="mr-3 lg:mr-4 w-5 h-5 lg:w-6 lg:h-6 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                                <p className="text-sm lg:text-base font-medium group-hover:text-blue-600 transition-colors duration-200 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Quản lý Camera
+                                </p>
+                            </NavLink>
+                        )}
 
                         <div
                             onClick={handleLogout}
