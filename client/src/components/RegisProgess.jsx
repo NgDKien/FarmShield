@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 const API_BASE_URL = import.meta.env.VITE_API_FACE_DETECTION_URL;
 
-const RegistrationProgress = () => {
+const RegistrationProgress = ({camera_id}) => {
     const [progressMessages, setProgressMessages] = useState([]);
 
     useEffect(() => {
+        // Reset messages when camera_id changes or component mounts
+        setProgressMessages([]);
         // Establish the SSE connection
         const eventSource = new EventSource(`${API_BASE_URL}/registration_events`,{
             withCredentials: true
@@ -12,8 +14,14 @@ const RegistrationProgress = () => {
 
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('SSE Message:', data);
-            setProgressMessages(prevMessages => [...prevMessages, data]);
+            console.log('Received SSE message:', data);
+            if (data.camera_id === camera_id) {
+                const allowedStatuses = ['success', 'error', 'progress'];
+                if (allowedStatuses.includes(data.status)) {
+                    // setProgressMessages(prevMessages => [...prevMessages, data]);
+                    setProgressMessages([data]);
+                }
+            }
         };
 
         eventSource.onerror = (error) => {
@@ -32,7 +40,7 @@ const RegistrationProgress = () => {
         }
 
 
-    }, []);
+    }, [camera_id]);
 
     return (
         <div>

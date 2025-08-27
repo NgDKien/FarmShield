@@ -5,7 +5,7 @@ const EntryLogSchema = new mongoose.Schema({
     facility: {
         type: String,
         required: true,
-        enum: ['Sanitize Facility', 'Quarantine']
+        enum: ['Sanitize Facility', 'Quarantine Facility']
     },
     timestamp: {
         type: Date,

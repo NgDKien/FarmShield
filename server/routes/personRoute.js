@@ -4,10 +4,11 @@ const personController = require('../controllers/personController');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+// import {upload} from '../config/multer'
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/avatars');
+        cb(null, 'people/avatars');
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = uuidv4();
@@ -33,10 +34,11 @@ const upload = multer({
 
 // 'avatar' name of the field in the form data
 router.post('/register', upload.single('avatar'), personController.registerPerson);
-
+router.get('/quarantine', personController.getAllInQuarantine);
 router.post('/facility/sanitize/enter', personController.enterSanitizeFacility);
 router.post('/facility/quarantine/start', personController.startQuarantine);
-router.get('/:facialScanId', personController.getPersonDetails);
+router.get('/:personId', personController.getPersonDetails);
+
 
 
 module.exports = router;

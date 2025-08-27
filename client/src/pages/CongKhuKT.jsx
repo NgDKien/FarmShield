@@ -1,15 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
 import { NavLink } from 'react-router-dom'
 import { CameraFeed, RegisProgess } from '../components';
 import { useSelector } from 'react-redux';
-import { handleCheckFaceToRegister, handleStopCheckFaceToRegister } from '../services/faceDetectionApi'
+import { handleCheckFaceToRegister, handleStopCheckFaceToRegister, fetchQuarantineData } from '../services/faceDetectionApi'
 import PopupThongTinCongKT from '../components/PopupThongTinCongKT'
 
 const CongKhuKT = () => {
     const [isPopupOpen, setIsPopupOpen] = useState(false)
     const [isCheckingOn, setIsCheckingOn] = useState(false);
+    const [quarantineCount, setQuarantineCount] = useState(0); //intial value to 0
+    const [person, setPerson] = useState([]); //empty array
+
     const { currentCameraId, currentCameraRtspUrl } = useSelector(state => state.camera);
     console.log("cameraID = " + currentCameraId + ", rtspUrl = " + currentCameraRtspUrl);
 
@@ -20,6 +23,22 @@ const CongKhuKT = () => {
     const hidePopup = () => {
         setIsPopupOpen(false)
     }
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await fetchQuarantineData();
+                setQuarantineCount(data.length);
+                setPerson(data);
+            } catch (error) {
+                console.error("Error fetching quarantine data:", error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+
 
     const handleToggleButtonClick = async () => {
         setIsCheckingOn(prev => !prev);
@@ -74,7 +93,7 @@ const CongKhuKT = () => {
 
                             <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between">
                                 {/* Box bên trái - Video Feed using CameraFeed component */}
-                                <div className="relative flex-1 aspect-video lg:aspect-[16/10] min-h-[300px] lg:min-h-[400px] xl:min-h-[484px]">
+                                <div className="relative flex-1 aspect-video lg:aspect-[16/10] min-h-[300px] lg:min-h-[400px] xl:min-h-[484px] mr-2">
                                     <CameraFeed
                                         cameraId={currentCameraId}
                                         rtspUrl={currentCameraRtspUrl}
@@ -98,12 +117,18 @@ const CongKhuKT = () => {
                                             Số người đi vào hiện tại:
                                         </p>
                                         <div className='text-3xl lg:text-4xl xl:text-5xl font-extrabold text-blue-700'>
-                                            100
+                                            {quarantineCount}
                                         </div>
-                                        <RegisProgess />
                                     </div>
 
-                                    <div className='flex flex-col items-center justify-center mt-[20px] xl:h-[314px] rounded-xl lg:rounded-2xl border border-gray-400 bg-white shadow-sm'>Warning</div>
+                                    <div className='flex flex-col items-center justify-center mt-2 xl:h-[325px] rounded-xl lg:rounded-2xl border border-gray-400 bg-white shadow-sm'>
+                                        <p className='text-lg lg:text-xl font-semibold text-center px-4 mb-4'>
+                                            Progress Status:
+                                        </p>
+                                        <RegisProgess className='mr-2 ml-2'
+                                            camera_id={currentCameraId}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -122,16 +147,18 @@ const CongKhuKT = () => {
 
                             {/* Scrollable table body */}
                             <div className="h-[300px] overflow-y-auto">
-                                {/* Repeatable rows */}
-                                <div className="table-row-wrapper cursor-pointer" onClick={showPopup}>
-                                    <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] items-center text-xl text-black mb-2">
-                                        <div className="text-center break-words">Nguyễn Văn B</div>
-                                        <div className="text-center break-words">20/07/2025</div>
-                                        <div className="text-center break-words">15:30</div>
-                                        <div className="text-center break-words">16:00</div>
+                                {/*Mapping person state Repeatable rows */}
+                                {person.map((personData)=> (
+                                    <div key={(personData.personId)} className="table-row-wrapper cursor-pointer" onClick={showPopup}>
+                                        <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] items-center text-xl text-black mb-2">
+                                            <div className="text-center break-words">{personData.name}</div>
+                                            <div className="text-center break-words">{new Date(personData.entryLog[0].timestamp).toLocaleDateString('vi-VN')}</div>
+                                            <div className="text-center break-words">{new Date(personData.entryLog[0].timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
+                                            <div className="text-center break-words">{personData.entryLog.length > 1 ? new Date(personData.entryLog[personData.entryLog.length - 1].timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '--:--'}</div>
+                                        </div>
+                                        <div className="w-full h-px bg-[#D6DDEA] mb-2"></div>
                                     </div>
-                                    <div className="w-full h-px bg-[#D6DDEA] mb-2"></div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>

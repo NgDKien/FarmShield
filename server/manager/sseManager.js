@@ -102,7 +102,7 @@ function sendEvent(data) {
         
         try {
             client.write(`data: ${eventData}\n\n`);
-            console.log("Sent SSE event to client:", data.status, data.message);
+            //console.log("Sent SSE event to client:", data.status, data.message);
         } catch (error) {
             console.error("Error writing to SSE client:", error.message);
             clientsToRemove.push(client);

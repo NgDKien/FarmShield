@@ -35,14 +35,14 @@ function initializeWebSocketServer(server, sseManager) {
         }
 
         ws.on('message', message => {
-            console.log(`[WS-Edge Manager] Received from ${edgeId}: ${message}`);
+            //console.log(`[WS-Edge Manager] Received from ${edgeId}: ${message}`);
             try {
                 const parsedMessage = JSON.parse(message);
                 if (sseEmitter) {
                     sseEmitter.sendEvent(parsedMessage);
                 }
             } catch (e) {
-                console.error(`[WS-Edge Manager] Error parsing message from ${edgeId}: ${e}`);
+                //console.error(`[WS-Edge Manager] Error parsing message from ${edgeId}: ${e}`);
             }
         });
 
@@ -63,7 +63,7 @@ function initializeWebSocketServer(server, sseManager) {
 function sendCommandToEdgeDevice(edgeId, command) {
     const ws = connectedEdgeDevices.get(edgeId);
     if (ws && ws.readyState === WebSocket.OPEN) {
-        console.log(`[WS-Edge Manager] Sending command to '${edgeId}': ${JSON.stringify(command)}`);
+        //console.log(`[WS-Edge Manager] Sending command to '${edgeId}': ${JSON.stringify(command)}`);
         ws.send(JSON.stringify(command));
         return { status: "success", message: "Command sent." };
     } else {
