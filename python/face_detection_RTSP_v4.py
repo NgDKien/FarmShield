@@ -23,9 +23,17 @@ camera_manager = CameraManager()
 
 # --- Face Encoding Functions ---
 from services.face_services import *
+# --- YOLO Tracking Service ---
+from services.yolo_tracking_service import YOLOTrackingService
+
 stop_checking = False
 face_services = face_services()
-face_encooding = face_encooding()
+face_encooding = face_encoding()
+yolo_tracking_service = YOLOTrackingService()
+
+# --- Active WebSocket video streams ---
+active_video_streams = {}  # {camera_id: websocket}
+video_stream_servers = {}  # {camera_id: server}
 
 
 
@@ -119,6 +127,22 @@ async def connect_to_central_server():
                                 asyncio.create_task(face_services.check_face_to_register(websocket, camera_id, rtsp_url, name))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id or rtsp_url"}))
+                        elif cmd.get("type") == "start_tracking":
+                            camera_id = cmd.get("camera_id")
+                            rtsp_url = cmd.get("rtsp_url")
+                            if camera_id and rtsp_url:
+                                camera = camera_manager.get_or_create_camera(camera_id, rtsp_url)
+                                if camera is not None:
+                                    yolo_tracking_service.start_tracking(camera)
+                                    await websocket.send(json.dumps({"status": "info", "message": f"Started tracking on camera '{camera_id}'."}))
+                                else:
+                                    await websocket.send(json.dumps({"status": "error", "message": f"Failed to initialize camera '{camera_id}'"}))
+                            else:
+                                await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id or rtsp_url"}))
+                        elif cmd.get("type") == "stop_tracking":
+                            yolo_tracking_service.stop_tracking()
+                            camera_id = cmd.get("camera_id")
+                            await websocket.send(json.dumps({"status": "info", "message": f"Stopped tracking on camera {camera_id}"}))
                         elif cmd.get("type") == "stop_camera":
                             cid = cmd.get("camera_id")
                             if cid:
@@ -154,5 +178,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Shutdown signal received.")
     finally:
+        yolo_tracking_service.stop_tracking()
         camera_manager.stop_all_cameras()
         print("Application shutting down.")

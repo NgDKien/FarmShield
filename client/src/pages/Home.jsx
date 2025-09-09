@@ -53,7 +53,12 @@ const Home = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-12">
                         <NavLink to="/qtrinh-khu-trung" className="block">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Phòng khử trùng</p>
-                            <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
+                            <CameraFeed
+                                cameraId={gateCameraId}
+                                rtspUrl={gateCameraRtspUrl}
+                                altText="Cổng khu khử trùng Video Feed"
+                            />
+                            
                         </NavLink>
 
                         <NavLink to="/phong-cach-ly">
