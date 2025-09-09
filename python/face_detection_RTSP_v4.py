@@ -11,6 +11,7 @@ import pickle
 from PIL import Image
 import io
 from threading import Thread, Lock
+from collections import defaultdict
 
 # --- Centralized Camera Management ---
 from camera_manager import *
@@ -31,9 +32,9 @@ face_services = face_services()
 face_encooding = face_encoding()
 yolo_tracking_service = YOLOTrackingService()
 
-# --- Active WebSocket video streams ---
-active_video_streams = {}  # {camera_id: websocket}
-video_stream_servers = {}  # {camera_id: server}
+# --- Annotation State Management ---
+active_annotations = defaultdict(dict)  # Track active annotations per camera
+
 
 
 
@@ -70,6 +71,53 @@ def recognize_face(camera_id):
                     return jsonify({"recognized": known_names[best_match], "camera_id": camera_id}), 200
     return jsonify({"recognized": "Unknown", "camera_id": camera_id}), 200
 
+def draw_face_annotations(frame, face_locations, color=(0, 255, 0), label="Face"):
+    """Draw rectangles around detected faces with optional label"""
+    for (top, right, bottom, left) in face_locations:
+        top = max(0, top - 20)
+        left = max(0, left - 20)
+        bottom = min(frame.shape[0], bottom + 20)
+        right = min(frame.shape[1], right + 20)
+        
+        # Draw a rectangle around the face
+        cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
+        # Draw a label with a background
+        cv2.rectangle(frame, (left, bottom - 35), (right, bottom), color, cv2.FILLED)
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(frame, label, (left + 6, bottom - 6), font, 0.6, (255, 255, 255), 1)
+    return frame
+
+def draw_tracking_annotations(frame, results):
+    """Draw YOLO tracking annotations on frame"""
+    if not results or len(results) == 0:
+        return frame
+        
+    result = results[0]  # Get first result
+    if not hasattr(result, 'boxes') or result.boxes is None:
+        return frame
+        
+    # Extract bounding boxes, confidences, and track IDs
+    boxes = result.boxes.xyxy.cpu().numpy()  # Bounding boxes
+    confidences = result.boxes.conf.cpu().numpy()  # Confidence scores
+    class_ids = result.boxes.cls.cpu().numpy()  # Class IDs
+    track_ids = result.boxes.id.cpu().numpy() if result.boxes.id is not None else [None] * len(boxes)
+    
+    # Process each detected person
+    for i, (box, confidence, class_id, track_id) in enumerate(zip(boxes, confidences, class_ids, track_ids)):
+        if class_id == 0 and confidence > 0.5:  # Person detected with good confidence
+            x1, y1, x2, y2 = map(int, box)
+            person_id = int(track_id) if track_id is not None else i
+            
+            # Draw bounding box
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            
+            # Draw label with person ID
+            label = f"Person {person_id}"
+            cv2.rectangle(frame, (x1, y1 - 20), (x1 + len(label) * 10, y1), (255, 0, 0), cv2.FILLED)
+            cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+    return frame
+
 @app.route("/video_feed/<camera_id>")
 def video_feed(camera_id):
     rtsp_url = request.args.get('url')
@@ -87,7 +135,30 @@ def video_feed(camera_id):
                 cv2.putText(placeholder, f"Connecting to {camera_id}...", (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
                 ret, buffer = cv2.imencode('.jpg', placeholder)
             else:
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+                # Check if we need to add annotations
+                if camera_id in active_annotations:
+                    annotation_type = active_annotations[camera_id].get('type')
+                    
+                    if annotation_type == "face_registration":
+                        # Add face detection annotations for registration
+                        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        face_locations = face_recognition.face_locations(rgb)
+                        frame = draw_face_annotations(frame, face_locations, (0, 255, 0), "Registering")
+                        
+                    elif annotation_type == "face_checking":
+                        # Add face detection annotations for checking
+                        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        face_locations = face_recognition.face_locations(rgb)
+                        frame = draw_face_annotations(frame, face_locations, (255, 255, 0), "Checking")
+                        
+                    elif annotation_type == "tracking":
+                        # Add YOLO tracking annotations
+                        # Get annotated frame from YOLO tracking service
+                        annotated_frame = yolo_tracking_service.get_annotated_frame()
+                        if annotated_frame is not None:
+                            frame = annotated_frame
+
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             if not ret:
                 continue
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
@@ -115,6 +186,8 @@ async def connect_to_central_server():
                             camera_id = cmd.get("camera_id")
                             rtsp_url = cmd.get("rtsp_url")
                             if name and camera_id and rtsp_url:
+                                # Set annotation state for face registration
+                                active_annotations[camera_id] = {'type': 'face_registration', 'name': name}
                                 asyncio.create_task(face_services.perform_registration(websocket, name, camera_id, rtsp_url))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing fields"}))
@@ -123,6 +196,8 @@ async def connect_to_central_server():
                             rtsp_url = cmd.get("rtsp_url")
                             name = cmd.get("name")
                             if camera_id and rtsp_url:
+                                # Set annotation state for face checking
+                                active_annotations[camera_id] = {'type': 'face_checking', 'name': name}
                                 face_services.stop_check(False)
                                 asyncio.create_task(face_services.check_face_to_register(websocket, camera_id, rtsp_url, name))
                             else:
@@ -133,6 +208,8 @@ async def connect_to_central_server():
                             if camera_id and rtsp_url:
                                 camera = camera_manager.get_or_create_camera(camera_id, rtsp_url)
                                 if camera is not None:
+                                    # Set annotation state for tracking
+                                    active_annotations[camera_id] = {'type': 'tracking'}
                                     yolo_tracking_service.start_tracking(camera)
                                     await websocket.send(json.dumps({"status": "info", "message": f"Started tracking on camera '{camera_id}'."}))
                                 else:
@@ -142,17 +219,26 @@ async def connect_to_central_server():
                         elif cmd.get("type") == "stop_tracking":
                             yolo_tracking_service.stop_tracking()
                             camera_id = cmd.get("camera_id")
+                            # Remove annotation state
+                            if camera_id in active_annotations:
+                                del active_annotations[camera_id]
                             await websocket.send(json.dumps({"status": "info", "message": f"Stopped tracking on camera {camera_id}"}))
                         elif cmd.get("type") == "stop_camera":
                             cid = cmd.get("camera_id")
                             if cid:
                                 camera_manager.stop_camera(cid)
+                                # Remove annotation state
+                                if cid in active_annotations:
+                                    del active_annotations[cid]
                                 await websocket.send(json.dumps({"status": "info", "message": f"Stopped camera '{cid}'."}))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id"}))
                         elif cmd.get("type") == "stop_check_face":
                             face_services.stop_check(True)
                             camera_id = cmd.get("camera_id")
+                            # Remove annotation state
+                            if camera_id in active_annotations:
+                                del active_annotations[camera_id]
                             await websocket.send(json.dumps({"status": "info", "message": f"Stopping face checking for camera {camera_id}"}))
                             
                     except json.JSONDecodeError:

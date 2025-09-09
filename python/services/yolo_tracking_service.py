@@ -33,6 +33,10 @@ class YOLOTrackingService:
         # For tracking person states
         self.person_states = defaultdict(dict)
         
+        # For visualization
+        self.annotated_frame = None
+        self.events = []  # Store recent events for visualization
+        
     def start_tracking(self, camera):
         """Start the tracking process on the given camera"""
         if self.is_tracking:
@@ -50,7 +54,12 @@ class YOLOTrackingService:
         self.is_tracking = False
         if self.tracking_thread and self.tracking_thread.is_alive():
             self.tracking_thread.join(timeout=5)
+        self.annotated_frame = None
         print("[YOLO] Stopped tracking")
+        
+    def get_annotated_frame(self):
+        """Get the latest annotated frame"""
+        return self.annotated_frame
         
     def _tracking_loop(self):
         """Main tracking loop"""
@@ -66,6 +75,16 @@ class YOLOTrackingService:
                 
                 # Process results
                 self._process_detections(frame, results)
+                
+                # Store annotated frame for visualization
+                if results and len(results) > 0:
+                    self.annotated_frame = results[0].plot()
+                    # Add event annotations to the frame
+                    self._draw_event_annotations()
+                else:
+                    self.annotated_frame = frame.copy()
+                    # Add event annotations to the frame
+                    self._draw_event_annotations()
                 
                 time.sleep(0.03)  # Control frame rate
             except Exception as e:
@@ -185,7 +204,52 @@ class YOLOTrackingService:
         # This is where you would integrate with your system
         # For example, send a notification or update a database
         print(f"[YOLO] Cloth change event for person {person_id}")
+        # Add event for visualization
+        self.events.append({
+            'type': 'cloth_change',
+            'person_id': person_id,
+            'time': time.time()
+        })
+        # Keep only recent events (last 10 seconds)
+        self.events = [e for e in self.events if time.time() - e['time'] < 10]
         # TODO: Integrate with your system (e.g., API call to backend)
+        
+    def _on_hand_washing_detected(self, person_id):
+        """Callback when hand washing is detected"""
+        # This is where you would integrate with your system
+        # For example, send a notification or update a database
+        print(f"[YOLO] Hand washing event for person {person_id}")
+        # Add event for visualization
+        self.events.append({
+            'type': 'hand_washing',
+            'person_id': person_id,
+            'time': time.time()
+        })
+        # Keep only recent events (last 10 seconds)
+        self.events = [e for e in self.events if time.time() - e['time'] < 10]
+        # TODO: Integrate with your system (e.g., API call to backend)
+        
+    def _draw_event_annotations(self):
+        """Draw event annotations on the frame"""
+        if self.annotated_frame is None:
+            return
+            
+        current_time = time.time()
+        # Filter events to only show recent ones (last 5 seconds)
+        recent_events = [e for e in self.events if current_time - e['time'] < 5]
+        
+        for event in recent_events:
+            # Display event notification at the top of the frame
+            y_pos = 30 + (recent_events.index(event) * 30)
+            if event['type'] == 'cloth_change':
+                text = f"Cloth Change Detected for Person {event['person_id']}!"
+                color = (0, 165, 255)  # Orange
+            elif event['type'] == 'hand_washing':
+                text = f"Hand Washing Detected for Person {event['person_id']}!"
+                color = (255, 0, 0)  # Blue
+            
+            cv2.putText(self.annotated_frame, text, (10, y_pos), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
         
     def _on_hand_washing_detected(self, person_id):
         """Callback when hand washing is detected"""
