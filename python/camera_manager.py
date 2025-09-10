@@ -32,6 +32,13 @@ class Camera:
                     self.cap = None
                     time.sleep(5)
                     continue
+                
+                # Set video capture properties for better quality
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Reduce buffer size to get latest frames
+                self.cap.set(cv2.CAP_PROP_FPS, 30)  # Set FPS
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)  # Set width
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)  # Set height
+                
                 print(f"[Camera {self.rtsp_url}] Successfully connected to RTSP stream.")
 
             ret, frame = self.cap.read()

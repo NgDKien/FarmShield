@@ -180,11 +180,11 @@ def video_feed(camera_id):
                         if annotated_frame is not None:
                             frame = annotated_frame
 
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
             if not ret:
                 continue
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            time.sleep(0.03)
+            time.sleep(0.01)
 
     return Response(gen_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
 

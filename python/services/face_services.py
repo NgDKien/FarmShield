@@ -145,12 +145,12 @@ class face_services:
         distance = np.sqrt((face_center_x - self.guide_circle_center[0])**2 + 
                           (face_center_y - self.guide_circle_center[1])**2)
         
-        # Check if the distance is less than the radius
-        return distance <= self.guide_circle_radius
+        # Check if the distance is less than the radius (with some padding)
+        return distance <= (self.guide_circle_radius - 50)  # Reduced by 20 pixels for better accuracy
         
     def _check_face_orientation(self, frame, face_location):
         """
-        Check if the face is looking directly at the camera.
+        Check if the face is looking directly at the camera using eye positions relative to nose/mouth.
         
         Args:
             frame (numpy.ndarray): The frame containing the face
@@ -170,12 +170,14 @@ class face_services:
             
         face_landmarks = face_landmarks_list[0]
         
-        # Get key facial points
+        # Get eye, nose, and mouth landmarks
         left_eye = face_landmarks['left_eye']
         right_eye = face_landmarks['right_eye']
-        nose_tip = face_landmarks['nose_tip'][0] if face_landmarks['nose_tip'] else None
+        nose_tip = face_landmarks['nose_tip']
+        top_lip = face_landmarks['top_lip']
         
-        if not left_eye or not right_eye or not nose_tip:
+        # Need at least eyes and either nose or mouth
+        if not left_eye or not right_eye or (not nose_tip and not top_lip):
             return False
             
         # Calculate eye centers
@@ -185,23 +187,49 @@ class face_services:
         # Calculate the angle between the eyes (should be roughly horizontal for front-facing)
         eye_angle = np.arctan2(right_eye_center[1] - left_eye_center[1], 
                               right_eye_center[0] - left_eye_center[0])
-        eye_angle_deg = np.degrees(eye_angle)
+        eye_angle_deg = abs(np.degrees(eye_angle))
         
         # Check if eyes are roughly level (face is not tilted too much)
         # Allow for some variation (±15 degrees)
-        if abs(eye_angle_deg) > 10:
+        if eye_angle_deg > 15:
+            print(f"Eye angle too large: {eye_angle_deg} degrees")
             return False
             
-        # Calculate the position of the nose relative to the eyes
-        # For a front-facing face, the nose should be centered between the eyes
-        eye_center_x = (left_eye_center[0] + right_eye_center[0]) / 2
-        nose_deviation = abs(nose_tip[0] - eye_center_x)
+        # Use nose tip as center point if available, otherwise use mouth center
+        if nose_tip:
+            # Calculate nose tip center
+            nose_center = np.mean(nose_tip, axis=0)
+            face_center_x = nose_center[0]
+        elif top_lip:
+            # Calculate mouth center as fallback
+            mouth_center = np.mean(top_lip, axis=0)
+            face_center_x = mouth_center[0]
+        else:
+            return False  # Should not happen due to earlier check
+            
+        # Calculate distances from each eye to the nose/mouth center
+        left_eye_distance = abs(left_eye_center[0] - face_center_x)
+        right_eye_distance = abs(right_eye_center[0] - face_center_x)
         
-        # Allow for some deviation based on face size
-        face_width = face_location[1] - face_location[3]  # right - left
-        max_deviation = face_width * 0.10  # 15% of face width
+        # For a front-facing face, these distances should be similar
+        if left_eye_distance > 0 and right_eye_distance > 0:
+            distance_ratio = min(left_eye_distance, right_eye_distance) / max(left_eye_distance, right_eye_distance)
+            print(f"DEBUG: Eye distance ratio: {distance_ratio}")
+            if distance_ratio < 0.7:  # If the ratio is too small, the face is likely turned
+                print(f"Eye distance ratio too small: {distance_ratio}, indicating face is turned")
+                return False
         
-        return nose_deviation <= max_deviation
+        # Additional check: when facing the camera directly, the vertical positions of the eyes
+        # should be roughly the same
+        eye_height_diff = abs(left_eye_center[1] - right_eye_center[1])
+        face_height = face_location[2] - face_location[0]  # bottom - top
+        
+        # The height difference should be small relative to the face height
+        if eye_height_diff > face_height * 0.1:  # 10% of face height
+            print(f"Eye height difference too large: {eye_height_diff} pixels, face height: {face_height}")
+            return False
+        
+        return True
         
     def is_running(self) -> bool:
         return self._is_async_task_running
