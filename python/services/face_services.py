@@ -176,7 +176,6 @@ class face_services:
         nose_tip = face_landmarks['nose_tip']
         top_lip = face_landmarks['top_lip']
         
-        # Need at least eyes and either nose or mouth
         if not left_eye or not right_eye or (not nose_tip and not top_lip):
             return False
             
@@ -211,16 +210,13 @@ class face_services:
         left_eye_distance = abs(left_eye_center[0] - face_center_x)
         right_eye_distance = abs(right_eye_center[0] - face_center_x)
         
-        # For a front-facing face, these distances should be similar
         if left_eye_distance > 0 and right_eye_distance > 0:
             distance_ratio = min(left_eye_distance, right_eye_distance) / max(left_eye_distance, right_eye_distance)
-            print(f"DEBUG: Eye distance ratio: {distance_ratio}")
-            if distance_ratio < 0.7:  # If the ratio is too small, the face is likely turned
-                print(f"Eye distance ratio too small: {distance_ratio}, indicating face is turned")
+            #print(f"[DEBUG]: Eye distance ratio: {distance_ratio}")
+            if distance_ratio < 0.7:
+                #print(f"Eye distance ratio too small: {distance_ratio}, indicating face is turned")
                 return False
         
-        # Additional check: when facing the camera directly, the vertical positions of the eyes
-        # should be roughly the same
         eye_height_diff = abs(left_eye_center[1] - right_eye_center[1])
         face_height = face_location[2] - face_location[0]  # bottom - top
         

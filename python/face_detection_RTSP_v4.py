@@ -99,44 +99,54 @@ def draw_registration_guide(frame):
     """
     height, width = frame.shape[:2]
     center = (width // 2, height // 2)
-    radius = 100  # Reduced to 2/3 of original size (150 * 2/3 = 100)
+    # radius = 100  # Reduced to 2/3 of original size (150 * 2/3 = 100)
     
-    # Draw the guide circle
-    cv2.circle(frame, center, radius, (0, 255, 0), 2)
-    cv2.putText(frame, "Position your face within the circle", (10, 30), 
-               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    # # Draw the guide circle
+    # cv2.circle(frame, center, radius, (0, 255, 0), 2)
+    # cv2.putText(frame, "Position your face within the circle", (10, 30), 
+    #            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    
+    
+     # Define the oval parameters concisely
+    axes = (80, 100)  # (Horizontal radius, Vertical radius)
+    angle, start_angle, end_angle = 0, 0, 360 # Angle, Start Angle, End Angle for ellipse
+
+    # Draw the guide oval
+    cv2.ellipse(frame, center, axes, angle, start_angle, end_angle, (0, 0, 255), 2)
+    cv2.putText(frame, "Position your face within the oval", (200, 30), 
+               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return frame
 
-def draw_tracking_annotations(frame, results):
-    """Draw YOLO tracking annotations on frame"""
-    if not results or len(results) == 0:
-        return frame
+# def draw_tracking_annotations(frame, results):
+#     """Draw YOLO tracking annotations on frame"""
+#     if not results or len(results) == 0:
+#         return frame
         
-    result = results[0]  # Get first result
-    if not hasattr(result, 'boxes') or result.boxes is None:
-        return frame
+#     result = results[0]  # Get first result
+#     if not hasattr(result, 'boxes') or result.boxes is None:
+#         return frame
         
-    # Extract bounding boxes, confidences, and track IDs
-    boxes = result.boxes.xyxy.cpu().numpy()  # Bounding boxes
-    confidences = result.boxes.conf.cpu().numpy()  # Confidence scores
-    class_ids = result.boxes.cls.cpu().numpy()  # Class IDs
-    track_ids = result.boxes.id.cpu().numpy() if result.boxes.id is not None else [None] * len(boxes)
+#     # Extract bounding boxes, confidences, and track IDs
+#     boxes = result.boxes.xyxy.cpu().numpy()  # Bounding boxes
+#     confidences = result.boxes.conf.cpu().numpy()  # Confidence scores
+#     class_ids = result.boxes.cls.cpu().numpy()  # Class IDs
+#     track_ids = result.boxes.id.cpu().numpy() if result.boxes.id is not None else [None] * len(boxes)
     
-    # Process each detected person
-    for i, (box, confidence, class_id, track_id) in enumerate(zip(boxes, confidences, class_ids, track_ids)):
-        if class_id == 0 and confidence > 0.5:  # Person detected with good confidence
-            x1, y1, x2, y2 = map(int, box)
-            person_id = int(track_id) if track_id is not None else i
+#     # Process each detected person
+#     for i, (box, confidence, class_id, track_id) in enumerate(zip(boxes, confidences, class_ids, track_ids)):
+#         if class_id == 0 and confidence > 0.5:  # Person detected with good confidence
+#             x1, y1, x2, y2 = map(int, box)
+#             person_id = int(track_id) if track_id is not None else i
             
-            # Draw bounding box
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+#             # Draw bounding box
+#             cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
             
-            # Draw label with person ID
-            label = f"Person {person_id}"
-            cv2.rectangle(frame, (x1, y1 - 20), (x1 + len(label) * 10, y1), (255, 0, 0), cv2.FILLED)
-            cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+#             # Draw label with person ID
+#             label = f"Person {person_id}"
+#             cv2.rectangle(frame, (x1, y1 - 20), (x1 + len(label) * 10, y1), (255, 0, 0), cv2.FILLED)
+#             cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
-    return frame
+#     return frame
 
 @app.route("/video_feed/<camera_id>")
 def video_feed(camera_id):
@@ -184,7 +194,7 @@ def video_feed(camera_id):
             if not ret:
                 continue
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            time.sleep(0.01)
+            time.sleep(0.03)
 
     return Response(gen_frames(camera), mimetype='multipart/x-mixed-replace; boundary=frame')
 

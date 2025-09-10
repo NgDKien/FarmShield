@@ -13,7 +13,7 @@ const QuyTrinhKT = () => {
     const handleToggleButtonClick = async () => {
         setIsCheckingOn(prev => !prev);
         if (!isCheckingOn) {
-            alert('Turning on face checking and registration');
+            alert('Turning on tracking');
             try {
                 const response = await handleCheckFaceToRegister(currentCameraId, currentCameraRtspUrl);
                 console.log("Face checking started:", response);

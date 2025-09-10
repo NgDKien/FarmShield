@@ -54,8 +54,8 @@ const Home = () => {
                         <NavLink to="/qtrinh-khu-trung" className="block">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Phòng khử trùng</p>
                             <CameraFeed
-                                cameraId={gateCameraId}
-                                rtspUrl={gateCameraRtspUrl}
+                                cameraId={'camera-gate-002'}
+                                rtspUrl={'rtsp://localhost:8554/webcam2'}
                                 altText="Khu khử trùng Video Feed"
                             />
                             
