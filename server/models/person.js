@@ -18,6 +18,19 @@ const EntryLogSchema = new mongoose.Schema({
     }
 })
 
+const SanitizeLogSchema = new mongoose.Schema({
+    clothChange:{
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    handWashing:{
+        type: Boolean,
+        required: true,
+        default: false
+    }
+})
+
 const PersonSchema = new mongoose.Schema({
     personId: {
         type: String,
@@ -56,10 +69,7 @@ const PersonSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
-    warning: {
-        type: String,
-        default: null
-    },
+    SanitizeLog:SanitizeLogSchema,
     entryLog: [EntryLogSchema]
 });
 

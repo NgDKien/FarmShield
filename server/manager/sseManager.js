@@ -55,41 +55,14 @@ function setupSSEConnection(req, res, next) {
 
     console.log("SSE client connected. Active clients:", clients.size);
     
-    // Keep connection alive with periodic heartbeat
-    // const heartbeatInterval = setInterval(() => {
-    //     if (res.destroyed || res.writableEnded) {
-    //         clearInterval(heartbeatInterval);
-    //         clients.delete(res);
-    //         return;
-    //     }
-        
-    //     try {
-    //         res.write(':\n\n'); // Heartbeat comment
-    //         const heartbeatData = JSON.stringify({
-    //             status: 'heartbeat',
-    //             message: `Heartbeat at ${new Date().toLocaleTimeString()}`,
-    //             timestamp: Date.now()
-    //         });
-    //         res.write(`data: ${heartbeatData}\n\n`);
-    //     } catch (error) {
-    //         console.error("Heartbeat failed:", error.message);
-    //         clearInterval(heartbeatInterval);
-    //         clients.delete(res);
-    //     }
-    // }, 30000); // Every 30 seconds
-
-    // // Clean up interval when connection closes
-    // res.on('close', () => {
-    //     clearInterval(heartbeatInterval);
-    // });
 }
 
 // Function to send an event to all connected SSE clients
 function sendEvent(data) {
-    if (clients.size === 0) {
-        console.log("No SSE clients connected, skipping event:", data);
-        return;
-    }
+    // if (clients.size === 0) {
+    //     console.log("No SSE clients connected, skipping event:", data);
+    //     return;
+    // }
 
     const eventData = JSON.stringify(data);
     const clientsToRemove = [];

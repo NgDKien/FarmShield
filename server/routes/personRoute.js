@@ -37,6 +37,7 @@ router.post('/register', upload.single('avatar'), personController.registerPerso
 router.get('/quarantine', personController.getAllInQuarantine);
 router.post('/facility/sanitize/enter', personController.enterSanitizeFacility);
 router.post('/facility/quarantine/start', personController.startQuarantine);
+router.post('/sanitize/log/update', personController.updateSanitizeLog);
 router.get('/:personId', personController.getPersonDetails);
 
 

@@ -45,6 +45,9 @@ class face_services:
         self.is_face_registering = False
         self.current_registration_id = None  # Track current registration to prevent duplicates
         self.face_encoding = face_encoding()
+        # Define registration guide circle parameters
+        self.guide_circle_radius = 150
+        self.guide_circle_center = None  # Will be set based on frame dimensions
         
     def _is_face_already_registered(self, encoding):
         """
@@ -61,14 +64,14 @@ class face_services:
         if not known_encodings:
             return False, None
             
-        # Use a stricter tolerance for face comparison (default is 0.6)
-        matches = face_recognition.compare_faces(known_encodings, encoding, tolerance=0.5)
+        # Use a more lenient tolerance for face comparison to handle different angles
+        matches = face_recognition.compare_faces(known_encodings, encoding, tolerance=0.6)
         if True in matches:
             matched_face_distances = face_recognition.face_distance(known_encodings, encoding)
             # Find the minimum distance and check if it's below our threshold
             min_distance = np.min(matched_face_distances)
-            # Use a stricter threshold for distance comparison
-            distance_threshold = 0.5
+            # Use a more lenient threshold for distance comparison to handle different angles
+            distance_threshold = 0.6
             if min_distance < distance_threshold:
                 matched_faceId = known_names[np.argmin(matched_face_distances)]
                 print(f"[DEBUG] Face match found: {matched_faceId} with distance: {min_distance:.4f} (threshold: {distance_threshold})")
@@ -90,6 +93,115 @@ class face_services:
             bool: True if multiple faces detected, False otherwise
         """
         return len(face_locations) > 1
+        
+    def _initialize_guide_circle(self, frame_shape):
+        """
+        Initialize the guide circle position based on frame dimensions.
+        
+        Args:
+            frame_shape (tuple): Shape of the frame (height, width, channels)
+        """
+        height, width = frame_shape[:2]
+        self.guide_circle_center = (width // 2, height // 2)
+        
+    def _draw_guide_circle(self, frame):
+        """
+        Draw a guide circle on the frame that users should position their face within.
+        
+        Args:
+            frame (numpy.ndarray): The frame to draw on
+            
+        Returns:
+            numpy.ndarray: The frame with the guide circle drawn
+        """
+        if self.guide_circle_center is None:
+            self._initialize_guide_circle(frame.shape)
+            
+        # Draw the guide circle
+        cv2.circle(frame, self.guide_circle_center, self.guide_circle_radius, (0, 255, 0), 2)
+        cv2.putText(frame, "Position your face within the circle", (10, 30), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        return frame
+        
+    def _is_face_in_circle(self, face_location):
+        """
+        Check if the face is positioned within the guide circle.
+        
+        Args:
+            face_location (tuple): Face location (top, right, bottom, left)
+            
+        Returns:
+            bool: True if face is within the circle, False otherwise
+        """
+        if self.guide_circle_center is None:
+            return False
+            
+        # Calculate the center of the face bounding box
+        top, right, bottom, left = face_location
+        face_center_x = (left + right) // 2
+        face_center_y = (top + bottom) // 2
+        
+        # Calculate distance from face center to guide circle center
+        distance = np.sqrt((face_center_x - self.guide_circle_center[0])**2 + 
+                          (face_center_y - self.guide_circle_center[1])**2)
+        
+        # Check if the distance is less than the radius
+        return distance <= self.guide_circle_radius
+        
+    def _check_face_orientation(self, frame, face_location):
+        """
+        Check if the face is looking directly at the camera.
+        
+        Args:
+            frame (numpy.ndarray): The frame containing the face
+            face_location (tuple): Face location (top, right, bottom, left)
+            
+        Returns:
+            bool: True if face is looking directly at the camera, False otherwise
+        """
+        # Convert to RGB for face_recognition
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        # Get face landmarks
+        face_landmarks_list = face_recognition.face_landmarks(rgb, [face_location])
+        
+        if not face_landmarks_list:
+            return False
+            
+        face_landmarks = face_landmarks_list[0]
+        
+        # Get key facial points
+        left_eye = face_landmarks['left_eye']
+        right_eye = face_landmarks['right_eye']
+        nose_tip = face_landmarks['nose_tip'][0] if face_landmarks['nose_tip'] else None
+        
+        if not left_eye or not right_eye or not nose_tip:
+            return False
+            
+        # Calculate eye centers
+        left_eye_center = np.mean(left_eye, axis=0)
+        right_eye_center = np.mean(right_eye, axis=0)
+        
+        # Calculate the angle between the eyes (should be roughly horizontal for front-facing)
+        eye_angle = np.arctan2(right_eye_center[1] - left_eye_center[1], 
+                              right_eye_center[0] - left_eye_center[0])
+        eye_angle_deg = np.degrees(eye_angle)
+        
+        # Check if eyes are roughly level (face is not tilted too much)
+        # Allow for some variation (±15 degrees)
+        if abs(eye_angle_deg) > 15:
+            return False
+            
+        # Calculate the position of the nose relative to the eyes
+        # For a front-facing face, the nose should be centered between the eyes
+        eye_center_x = (left_eye_center[0] + right_eye_center[0]) / 2
+        nose_deviation = abs(nose_tip[0] - eye_center_x)
+        
+        # Allow for some deviation based on face size
+        face_width = face_location[1] - face_location[3]  # right - left
+        max_deviation = face_width * 0.15  # 15% of face width
+        
+        return nose_deviation <= max_deviation
         
     def is_running(self) -> bool:
         return self._is_async_task_running
@@ -146,10 +258,10 @@ class face_services:
 
             
             collected_encodings = []
-            required_encodings = 1
-            max_attempts = 60
-            # Use a stricter threshold for determining if encodings are distinct
-            distinct_threshold = 0.4  # Increased from 0.34 to make it more strict
+            required_encodings = 5  # Increased to collect multiple angles
+            max_attempts = 100  # Increased attempts to allow for more movement
+            # Use a more relaxed threshold for determining if encodings are distinct
+            distinct_threshold = 0.3  # Decreased to allow more similar angles
             known_encodings, known_names = self.face_encoding.load_known_faces()
             
             # Pre-check: Verify if any face is already registered before starting
@@ -259,9 +371,10 @@ class face_services:
                             "status": "progress",
                             "collected": len(collected_encodings),
                             "required": required_encodings,
-                            "message": "Please move your head slightly."
+                            "message": f"Please move your head slightly. ({len(collected_encodings)}/{required_encodings} angles captured)"
                         }))
                         if len(collected_encodings) >= required_encodings:
+                            # Use the first encoding as the representative one for saving
                             avg_encoding = np.mean(collected_encodings, axis=0)
                             facial_scan_id_uuid = str(uuid.uuid4())
                             try:
@@ -272,6 +385,7 @@ class face_services:
                             if person_id:
                                 try:
                                     api_caller.updateEntryLogSanitizeFacility(facial_scan_id_uuid)
+                                    # Save all encodings for better recognition
                                     self.face_encoding.save_face_encoding(facial_scan_id_uuid, avg_encoding)
                                     await websocket.send(json.dumps({
                                         "camera_id": camera_id,
@@ -297,7 +411,7 @@ class face_services:
                             "message": "Change head position for a different angle."
                         }))
                 attempt_count += 1
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.3)  # Reduced sleep time to capture more angles quickly
 
             if not collected_encodings:
                 await websocket.send(json.dumps({
@@ -396,6 +510,10 @@ class face_services:
                                 "message": "Failed to capture frame from camera."}))
                             break
                         
+                        # Initialize guide circle if not already done
+                        if self.guide_circle_center is None:
+                            self._initialize_guide_circle(frame.shape)
+                        
                         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # color for face_recognition
                         locations = face_recognition.face_locations(rgb)
                         
@@ -411,13 +529,35 @@ class face_services:
                             await asyncio.sleep(2)
                             continue  # Continue checking rather than breaking
                         elif len(locations) == 1:
+                            current_face_location = locations[0]
+                            
+                            # Check if face is within the guide circle
+                            if not self._is_face_in_circle(current_face_location):
+                                await websocket.send(json.dumps({
+                                    "camera_id": camera_id,
+                                    "status": "error",
+                                    "message": "Please position your face within the circle."
+                                }))
+                                await asyncio.sleep(0.5)
+                                continue
+                            
+                            # Check if face is looking directly at the camera
+                            if not self._check_face_orientation(frame, current_face_location):
+                                await websocket.send(json.dumps({
+                                    "camera_id": camera_id,
+                                    "status": "error",
+                                    "message": "Please look directly at the camera."
+                                }))
+                                await asyncio.sleep(0.5)
+                                continue
+                            
+                            # Face is in the circle and looking at the camera, proceed with registration
                             await websocket.send(json.dumps({
                                 "camera_id": camera_id,
                                 "status": "success",
                                 "message": "Face Detected, Please Hold still to register."
                             }))
                             await asyncio.sleep(0.2)  # Wait before saving initial still face position
-                            current_face_location = locations[0]
                             
                             if still_start_time is None:
                                 still_start_time = time.time()

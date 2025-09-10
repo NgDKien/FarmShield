@@ -87,6 +87,26 @@ def draw_face_annotations(frame, face_locations, color=(0, 255, 0), label="Face"
         cv2.putText(frame, label, (left + 6, bottom - 6), font, 0.6, (255, 255, 255), 1)
     return frame
 
+def draw_registration_guide(frame):
+    """
+    Draw a guide circle on the frame that users should position their face within.
+    
+    Args:
+        frame (numpy.ndarray): The frame to draw on
+        
+    Returns:
+        numpy.ndarray: The frame with the guide circle drawn
+    """
+    height, width = frame.shape[:2]
+    center = (width // 2, height // 2)
+    radius = 150
+    
+    # Draw the guide circle
+    cv2.circle(frame, center, radius, (0, 255, 0), 2)
+    cv2.putText(frame, "Position your face within the circle", (10, 30), 
+               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    return frame
+
 def draw_tracking_annotations(frame, results):
     """Draw YOLO tracking annotations on frame"""
     if not results or len(results) == 0:
@@ -140,13 +160,15 @@ def video_feed(camera_id):
                     annotation_type = active_annotations[camera_id].get('type')
                     
                     if annotation_type == "face_registration":
-                        # Add face detection annotations for registration
+                        # Add registration guide circle and face detection annotations
+                        frame = draw_registration_guide(frame)
                         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         face_locations = face_recognition.face_locations(rgb)
                         frame = draw_face_annotations(frame, face_locations, (0, 255, 0), "Registering")
                         
                     elif annotation_type == "face_checking":
-                        # Add face detection annotations for checking
+                        # Add registration guide circle and face detection annotations for checking
+                        frame = draw_registration_guide(frame)
                         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         face_locations = face_recognition.face_locations(rgb)
                         frame = draw_face_annotations(frame, face_locations, (255, 255, 0), "Checking")
@@ -199,6 +221,9 @@ async def connect_to_central_server():
                                 # Set annotation state for face checking
                                 active_annotations[camera_id] = {'type': 'face_checking', 'name': name}
                                 face_services.stop_check(False)
+                                # Pass a default name if none is provided
+                                if not name:
+                                    name = "Unknown Person"
                                 asyncio.create_task(face_services.check_face_to_register(websocket, camera_id, rtsp_url, name))
                             else:
                                 await websocket.send(json.dumps({"status": "error", "message": "Missing camera_id or rtsp_url"}))

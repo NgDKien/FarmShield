@@ -1,9 +1,40 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
+import { CameraFeed, RegisProgess } from '../components';
 import { NavLink } from 'react-router-dom'
+import { useSelector } from 'react-redux';
+import { handleCheckFaceToRegister, handleStopCheckFaceToRegister, fetchQuarantineData } from '../services/faceDetectionApi'
 
 const QuyTrinhKT = () => {
+    const [isCheckingOn, setIsCheckingOn] = useState(false);
+    const { currentCameraId, currentCameraRtspUrl } = useSelector(state => state.camera);
+
+    const handleToggleButtonClick = async () => {
+        setIsCheckingOn(prev => !prev);
+        if (!isCheckingOn) {
+            alert('Turning on face checking and registration');
+            try {
+                const response = await handleCheckFaceToRegister(currentCameraId, currentCameraRtspUrl);
+                console.log("Face checking started:", response);
+            } catch (error) {
+                console.error("Failed to stop face checking:", error);
+                setIsCheckingOn(false);
+                alert("Failed to start face checking. Please try again.");
+            }
+        } else {
+            try {
+                const response = await handleStopCheckFaceToRegister(currentCameraId, currentCameraRtspUrl);
+                console.log("Face checking started:", response);
+                alert('Turning off face checking and registration');
+            } catch (error) {
+                console.error("Failed to stop face checking:", error);
+                setIsCheckingOn(true);
+                alert("Failed to stop face checking. Please try again.");
+            }
+        }
+    };
+
     return (
         <div className="font-main flex min-h-screen">
             <Sidebar />
@@ -24,8 +55,21 @@ const QuyTrinhKT = () => {
 
                     <div className='flex flex-col xl:flex-row gap-6 lg:gap-8 xl:gap-12'>
                         {/* Video/Camera Area */}
-                        <div className='flex-1 aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg min-h-[300px] lg:min-h-[400px] xl:min-h-[484px]'>
-                            {/* Placeholder for video/camera feed */}
+                        <div className="relative flex-1 aspect-video lg:aspect-[16/10] min-h-[300px] lg:min-h-[400px] xl:min-h-[484px] mr-2">
+                            <CameraFeed
+                                cameraId={currentCameraId}
+                                rtspUrl={currentCameraRtspUrl}
+                                altText="Cổng khu khử trùng Video Feed"
+                                className="w-full h-full"
+                            />
+                            <button
+                                className={`absolute top-4 right-4 z-10 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-opacity-75 text-sm font-bold
+                                            ${isCheckingOn ? 'bg-red-500 hover:bg-red-600 focus:ring-red-400' : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-400'}
+                                        `}
+                                onClick={handleToggleButtonClick}
+                            >
+                                {isCheckingOn ? 'Turn Off' : 'Turn On'}
+                            </button>
                         </div>
 
                         {/* Control Panel */}

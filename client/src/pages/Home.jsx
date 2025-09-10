@@ -56,7 +56,7 @@ const Home = () => {
                             <CameraFeed
                                 cameraId={gateCameraId}
                                 rtspUrl={gateCameraRtspUrl}
-                                altText="Cổng khu khử trùng Video Feed"
+                                altText="Khu khử trùng Video Feed"
                             />
                             
                         </NavLink>

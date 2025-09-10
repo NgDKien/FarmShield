@@ -71,8 +71,6 @@ const getPersonDetails = async (req, res) => {
     }
 };
 
-// Query //
-
 const getAllInQuarantine = async (req, res) => {
   try {
     const persons = await Person.find({
@@ -89,12 +87,33 @@ const getAllInQuarantine = async (req, res) => {
   }
 };
 
+const updateSanitizeLog = async (req, res) => {
+    const { facialScanId, clothChange, handWashing } = req.body;
+    try {
+        const person = await Person.findOne({ facialScanId });
+        if (!person) {
+            return res.status(404).json({ message: 'Person not found.' });
+        }
+        
+        // Update the sanitize log
+        person.SanitizeLog = {
+            clothChange: clothChange !== undefined ? clothChange : person.SanitizeLog.clothChange,
+            handWashing: handWashing !== undefined ? handWashing : person.SanitizeLog.handWashing
+        };
+        
+        await person.save();
+        res.status(200).json({ message: 'Sanitize log updated successfully', person });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 
 module.exports = {
     registerPerson,
     enterSanitizeFacility,
     startQuarantine,
     getPersonDetails,
-    // Query //
-    getAllInQuarantine
+    getAllInQuarantine,
+    updateSanitizeLog
 };
