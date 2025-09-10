@@ -99,7 +99,7 @@ def draw_registration_guide(frame):
     """
     height, width = frame.shape[:2]
     center = (width // 2, height // 2)
-    radius = 150
+    radius = 100  # Reduced to 2/3 of original size (150 * 2/3 = 100)
     
     # Draw the guide circle
     cv2.circle(frame, center, radius, (0, 255, 0), 2)

@@ -46,7 +46,7 @@ class face_services:
         self.current_registration_id = None  # Track current registration to prevent duplicates
         self.face_encoding = face_encoding()
         # Define registration guide circle parameters
-        self.guide_circle_radius = 150
+        self.guide_circle_radius = 100  # Reduced to 2/3 of original size (150 * 2/3 = 100)
         self.guide_circle_center = None  # Will be set based on frame dimensions
         
     def _is_face_already_registered(self, encoding):
@@ -189,7 +189,7 @@ class face_services:
         
         # Check if eyes are roughly level (face is not tilted too much)
         # Allow for some variation (±15 degrees)
-        if abs(eye_angle_deg) > 15:
+        if abs(eye_angle_deg) > 10:
             return False
             
         # Calculate the position of the nose relative to the eyes
@@ -199,7 +199,7 @@ class face_services:
         
         # Allow for some deviation based on face size
         face_width = face_location[1] - face_location[3]  # right - left
-        max_deviation = face_width * 0.15  # 15% of face width
+        max_deviation = face_width * 0.10  # 15% of face width
         
         return nose_deviation <= max_deviation
         
