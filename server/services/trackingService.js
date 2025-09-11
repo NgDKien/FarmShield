@@ -5,6 +5,7 @@ const Camera = require('../models/camera');
 
 async function startTracking(req, res) {
     const { camera_id } = req.body;
+    const {rtsp_url} = req.body;
     
     if (!camera_id) {
         return res.status(400).json({ success: false, message: "Missing 'camera_id'." });
@@ -12,11 +13,11 @@ async function startTracking(req, res) {
 
     try {
         // Fetch the RTSP URL from your database using camera_id
-        const camera = await Camera.findOne({ camera_id: camera_id });
-        if (!camera) {
-            return res.status(404).json({ success: false, message: "Camera not found in database." });
-        }
-        const rtsp_url = camera.rtsp_url;
+        // const camera = await Camera.findOne({ camera_id: camera_id });
+        // if (!camera) {
+        //     return res.status(404).json({ success: false, message: "Camera not found in database." });
+        // }
+        // const rtsp_url = camera.rtsp_url;
         const targetEdgeDeviceId = "house_server_alpha_001";
 
         const command = {

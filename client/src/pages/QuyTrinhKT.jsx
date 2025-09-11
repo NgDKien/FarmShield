@@ -4,18 +4,20 @@ import Header from '../components/Header'
 import { CameraFeed, RegisProgess } from '../components';
 import { NavLink } from 'react-router-dom'
 import { useSelector } from 'react-redux';
-import { handleCheckFaceToRegister, handleStopCheckFaceToRegister, fetchQuarantineData } from '../services/faceDetectionApi'
+import { handleStartTracking, handleStopTracking } from '../services/trackingApi'
 
 const QuyTrinhKT = () => {
     const [isCheckingOn, setIsCheckingOn] = useState(false);
-    const { currentCameraId, currentCameraRtspUrl } = useSelector(state => state.camera);
+    // const { currentCameraId, currentCameraRtspUrl } = useSelector(state => state.camera);
+    const currentCameraId = 'camera-gate-002';
+    const currentCameraRtspUrl = 'rtsp://localhost:8554/webcam2';
 
     const handleToggleButtonClick = async () => {
         setIsCheckingOn(prev => !prev);
         if (!isCheckingOn) {
             alert('Turning on tracking');
             try {
-                const response = await handleCheckFaceToRegister(currentCameraId, currentCameraRtspUrl);
+                const response = await handleStartTracking(currentCameraId, currentCameraRtspUrl);
                 console.log("Face checking started:", response);
             } catch (error) {
                 console.error("Failed to stop face checking:", error);
@@ -24,7 +26,7 @@ const QuyTrinhKT = () => {
             }
         } else {
             try {
-                const response = await handleStopCheckFaceToRegister(currentCameraId, currentCameraRtspUrl);
+                const response = await handleStopTracking(currentCameraId, currentCameraRtspUrl);
                 console.log("Face checking started:", response);
                 alert('Turning off face checking and registration');
             } catch (error) {

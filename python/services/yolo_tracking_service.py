@@ -71,7 +71,7 @@ class YOLOTrackingService:
                     continue
                     
                 # Run YOLOv8 detection and tracking
-                results = self.model.track(frame, persist=True, classes=[0])  # Class 0 is 'person'
+                results = self.model.track(frame, persist=True, classes=[0, 71])  # Class 0 is 'person', 71 for sink
                 
                 # Process results
                 self._process_detections(frame, results)
