@@ -1,0 +1,9 @@
+requests 
+face_recognition 
+flask 
+opencv-python 
+git+https://github.com/ageitgey/face_recognition_models 
+Pillow 
+setuptools 
+numpy
+ultralytics
