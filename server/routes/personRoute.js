@@ -35,8 +35,18 @@ const upload = multer({
 // 'avatar' name of the field in the form data
 router.post('/register', upload.single('avatar'), personController.registerPerson);
 router.get('/quarantine', personController.getAllInQuarantine);
+<<<<<<< HEAD
 router.post('/facility/sanitize/enter', personController.enterSanitizeFacility);
 router.post('/facility/quarantine/start', personController.startQuarantine);
+=======
+router.get('/prequarantine', personController.getAllInPreQuarantine);
+router.post('/facility/sanitize/enter', personController.enterSanitizeFacility);
+router.post('/facility/sanitize/exit', personController.exitSanitizeFacility);
+router.post('/facility/quarantine/start', personController.startQuarantine);
+router.post('/facility/quarantine/exit', personController.exitQuarantine);
+router.post('/sanitize/clothchange', personController.updateClothChangeStatus);
+router.post('/sanitize/handwashing', personController.updateHandWashingStatus);
+>>>>>>> origin/yolo_tracking
 router.get('/:personId', personController.getPersonDetails);
 
 

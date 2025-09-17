@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 ffmpeg -f v4l2 -i /dev/video0 -c:v libx264 -preset veryfast -tune zerolatency -crf 23 -f rtsp -rtsp_transport tcp rtsp://:8554/webcam
+=======
+ffmpeg -f v4l2 -i /dev/video0 -c:v libx264 -preset veryfast -tune zerolatency -crf 17 -f rtsp -rtsp_transport tcp rtsp://:8554/webcam
+>>>>>>> origin/yolo_tracking

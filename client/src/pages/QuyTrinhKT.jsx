@@ -1,9 +1,95 @@
+<<<<<<< HEAD
 import React from 'react'
 import Sidebar from '../components/Sidebar'
 import Header from '../components/Header'
 import { NavLink } from 'react-router-dom'
 
 const QuyTrinhKT = () => {
+=======
+import React, { useState, useEffect } from 'react';
+import Sidebar from '../components/Sidebar'
+import Header from '../components/Header'
+import { CameraFeed, RegisProgess } from '../components';
+import { NavLink } from 'react-router-dom'
+//import { useSelector } from 'react-redux';
+import { handleStartTracking, handleStopTracking } from '../services/trackingApi'
+import { fetchQuarantineData } from '../services/faceDetectionApi'
+const API_BASE_URL = import.meta.env.VITE_API_FACE_DETECTION_URL;
+
+const QuyTrinhKT = () => {
+    const [isCheckingOn, setIsCheckingOn] = useState(false);
+    const [person, setPerson] = useState([]); //empty array
+    // const { currentCameraId, currentCameraRtspUrl } = useSelector(state => state.camera);
+    const currentCameraId = 'camera-gate-002';
+    const currentCameraRtspUrl = 'rtsp://localhost:8554/webcam2';
+
+    useEffect(() => {
+        const eventSource = new EventSource(`${API_BASE_URL}/registration_events`, {
+            withCredentials: true
+        });
+
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('Received SSE message:', data);
+            if (data.status === 'update') {
+                // Refetch data when update event is received
+                const fetchData = async () => {
+                    try {
+                        const newData = await fetchQuarantineData();
+                        setPerson(newData);
+                    } catch (error) {
+                        console.error("Error fetching quarantine data:", error);
+                    }
+                };
+
+                fetchData();
+            }
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await fetchQuarantineData();
+                setPerson(data);
+            } catch (error) {
+                console.error("Error fetching quarantine data:", error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const handleToggleButtonClick = async () => {
+        setIsCheckingOn(prev => !prev);
+        if (!isCheckingOn) {
+            alert('Turning on tracking');
+            try {
+                const response = await handleStartTracking(currentCameraId, currentCameraRtspUrl);
+                console.log("Face checking started:", response);
+            } catch (error) {
+                console.error("Failed to stop face checking:", error);
+                setIsCheckingOn(false);
+                alert("Failed to start face checking. Please try again.");
+            }
+        } else {
+            try {
+                const response = await handleStopTracking(currentCameraId, currentCameraRtspUrl);
+                console.log("Face checking started:", response);
+                alert('Turning off face checking and registration');
+            } catch (error) {
+                console.error("Failed to stop face checking:", error);
+                setIsCheckingOn(true);
+                alert("Failed to stop face checking. Please try again.");
+            }
+        }
+    };
+
+>>>>>>> origin/yolo_tracking
     return (
         <div className="font-main flex min-h-screen">
             <Sidebar />
@@ -24,8 +110,26 @@ const QuyTrinhKT = () => {
 
                     <div className='flex flex-col xl:flex-row gap-6 lg:gap-8 xl:gap-12'>
                         {/* Video/Camera Area */}
+<<<<<<< HEAD
                         <div className='flex-1 aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg min-h-[300px] lg:min-h-[400px] xl:min-h-[484px]'>
                             {/* Placeholder for video/camera feed */}
+=======
+                        <div className="relative flex-1 aspect-video lg:aspect-[16/10] min-h-[300px] lg:min-h-[400px] xl:min-h-[484px] mr-2">
+                            <CameraFeed
+                                cameraId={currentCameraId}
+                                rtspUrl={currentCameraRtspUrl}
+                                altText="Cổng khu khử trùng Video Feed"
+                                className="w-full h-full"
+                            />
+                            <button
+                                className={`absolute top-4 right-4 z-10 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-opacity-75 text-sm font-bold
+                                            ${isCheckingOn ? 'bg-red-500 hover:bg-red-600 focus:ring-red-400' : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-400'}
+                                        `}
+                                onClick={handleToggleButtonClick}
+                            >
+                                {isCheckingOn ? 'Turn Off' : 'Turn On'}
+                            </button>
+>>>>>>> origin/yolo_tracking
                         </div>
 
                         {/* Control Panel */}
@@ -80,6 +184,52 @@ const QuyTrinhKT = () => {
                         </div>
                     </div>
                 </div>
+<<<<<<< HEAD
+=======
+
+                {/* Wrapper căn giữa */}
+                <div className="mt-[9px] w-full max-w-[1200px] mx-auto p-4 rounded-[20px] border border-[#D6DDEA] bg-white mb-8">
+                    {/* Table header */}
+                    <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] text-2xl font-semibold text-black mb-2">
+                        <div className="text-center">Họ và tên</div>
+                        <div className="text-center">Ngày ra vào</div>
+                        <div className="text-center">Giờ vào</div>
+                        <div className="text-center">Thay đồ</div>
+                        <div className="text-center">Rửa tay</div>
+                    </div>
+
+                    <div className="w-full h-px bg-[#D6DDEA] mb-2"></div>
+
+                    {/* Scrollable table body */}
+                    <div className="h-[300px] overflow-y-auto">
+                        {/*Mapping person state Repeatable rows */}
+                        {person.map((personData)=> (
+                            <div key={personData.personId} className="table-row-wrapper">
+                                <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] items-center text-xl text-black mb-2">
+                                    <div className="text-center break-words">{personData.name}</div>
+                                    <div className="text-center break-words">{new Date(personData.entryLog[0]?.timestamp || Date.now()).toLocaleDateString('vi-VN')}</div>
+                                    <div className="text-center break-words">{new Date(personData.entryLog[0]?.timestamp || Date.now()).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
+                                    <div className="text-center break-words">
+                                        {personData.SanitizeLog?.clothChange ? (
+                                            <span className="text-green-600 font-bold">✓</span>
+                                        ) : (
+                                            <span className="text-red-600 font-bold">✗</span>
+                                        )}
+                                    </div>
+                                    <div className="text-center break-words">
+                                        {personData.SanitizeLog?.handWashing ? (
+                                            <span className="text-green-600 font-bold">✓</span>
+                                        ) : (
+                                            <span className="text-red-600 font-bold">✗</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="w-full h-px bg-[#D6DDEA] mb-2"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+>>>>>>> origin/yolo_tracking
             </div>
         </div>
     )

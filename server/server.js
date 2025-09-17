@@ -11,7 +11,12 @@ const path = require('path');
 const app = express()
 app.use(
     cors({
+<<<<<<< HEAD
         origin: process.env.CLIENT_URL,
+=======
+        // origin: process.env.CLIENT_URL,
+        origin: true,
+>>>>>>> origin/yolo_tracking
         methods: ["POST", "PUT", "GET", "DELETE"],
         allowedHeaders: [
         'Origin',

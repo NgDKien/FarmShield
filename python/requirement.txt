@@ -5,4 +5,9 @@ opencv-python
 git+https://github.com/ageitgey/face_recognition_models 
 Pillow 
 setuptools 
+<<<<<<< HEAD
 numpy
+=======
+numpy
+ultralytics
+>>>>>>> origin/yolo_tracking

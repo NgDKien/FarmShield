@@ -55,6 +55,7 @@ function setupSSEConnection(req, res, next) {
 
     console.log("SSE client connected. Active clients:", clients.size);
     
+<<<<<<< HEAD
     // Keep connection alive with periodic heartbeat
     // const heartbeatInterval = setInterval(() => {
     //     if (res.destroyed || res.writableEnded) {
@@ -82,14 +83,23 @@ function setupSSEConnection(req, res, next) {
     // res.on('close', () => {
     //     clearInterval(heartbeatInterval);
     // });
+=======
+>>>>>>> origin/yolo_tracking
 }
 
 // Function to send an event to all connected SSE clients
 function sendEvent(data) {
+<<<<<<< HEAD
     if (clients.size === 0) {
         console.log("No SSE clients connected, skipping event:", data);
         return;
     }
+=======
+    // if (clients.size === 0) {
+    //     console.log("No SSE clients connected, skipping event:", data);
+    //     return;
+    // }
+>>>>>>> origin/yolo_tracking
 
     const eventData = JSON.stringify(data);
     const clientsToRemove = [];

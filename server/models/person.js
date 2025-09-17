@@ -18,6 +18,22 @@ const EntryLogSchema = new mongoose.Schema({
     }
 })
 
+<<<<<<< HEAD
+=======
+const SanitizeLogSchema = new mongoose.Schema({
+    clothChange:{
+        type: Boolean,
+        required: true,
+        default: false
+    },
+    handWashing:{
+        type: Boolean,
+        required: true,
+        default: false
+    }
+})
+
+>>>>>>> origin/yolo_tracking
 const PersonSchema = new mongoose.Schema({
     personId: {
         type: String,
@@ -56,6 +72,7 @@ const PersonSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+<<<<<<< HEAD
     warning: {
         type: String,
         default: null
@@ -63,5 +80,19 @@ const PersonSchema = new mongoose.Schema({
     entryLog: [EntryLogSchema]
 });
 
+=======
+    SanitizeLog:SanitizeLogSchema,
+    entryLog: [EntryLogSchema]
+}, {
+    // Explicitly control index creation to prevent accidental unique indexes
+    autoIndex: false
+});
+
+// Explicitly define only the indexes we want
+PersonSchema.index({ personId: 1 }, { unique: true });
+PersonSchema.index({ facialScanId: 1 }, { unique: true });
+PersonSchema.index({ avatarPath: 1 }, { unique: true });
+
+>>>>>>> origin/yolo_tracking
 module.exports = mongoose.model('Person', PersonSchema);
 

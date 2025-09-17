@@ -53,7 +53,16 @@ const Home = () => {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-12">
                         <NavLink to="/qtrinh-khu-trung" className="block">
                             <p className="text-xl lg:text-2xl font-semibold mb-3 lg:mb-4">Phòng khử trùng</p>
+<<<<<<< HEAD
                             <div className="w-full aspect-video lg:aspect-[16/10] bg-blue-100 rounded-lg"></div>
+=======
+                            <CameraFeed
+                                cameraId={'camera-gate-002'}
+                                rtspUrl={'rtsp://localhost:8554/webcam2'}
+                                altText="Khu khử trùng Video Feed"
+                            />
+                            
+>>>>>>> origin/yolo_tracking
                         </NavLink>
 
                         <NavLink to="/phong-cach-ly">
